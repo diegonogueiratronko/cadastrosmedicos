@@ -58,7 +58,7 @@ export default function Index() {
 
       {/* Footer */}
       <footer className="py-4 text-center text-xs text-white/40 relative z-10">
-        Tronko Innovation Office © 2025 — Unimed CNU
+        Tronko Innovation Office © 2026 — Cadastros Médicos
       </footer>
     </div>
   );
