@@ -115,7 +115,7 @@ export default function Dashboard() {
                 <PieChart>
                   <Pie
                     data={[
-                      { name: "Aprovados", value: kpis.aprovados || 0 },
+                      { name: "Aprovados", value: kpis.ok || 0 },
                       { name: "Pendentes", value: kpis.pendente || 0 },
                       { name: "Rejeitados", value: kpis.erro || 0 },
                     ].filter(d => d.value > 0)}
