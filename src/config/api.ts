@@ -1,6 +1,7 @@
 export const API_CONFIG = {
   WEBHOOK_CADASTRO: "https://tronkoinovacao.app.n8n.cloud/webhook/cadastro-medico",
-  WEBHOOK_DASHBOARD: "https://tronkoinovacao.app.n8n.cloud/webhook/api/cadastros",
+  WEBHOOK_DASHBOARD: "https://tronkoinovacao.app.n8n.cloud/webhook/dashboard-medicos",
+  WEBHOOK_ACAO: "https://tronkoinovacao.app.n8n.cloud/webhook/acao-cadastro",
 };
 
 export const SENHA_MEDICO = "unimed2025";

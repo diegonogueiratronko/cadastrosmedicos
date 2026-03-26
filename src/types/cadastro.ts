@@ -51,6 +51,7 @@ export type StatusCadastro = "PENDENTE" | "OK" | "ERRO" | "INATIVO";
 
 export interface CadastroRegistro {
   id: string;
+  idUnico: string;
   nome: string;
   cpf: string;
   cnpj: string;
@@ -64,19 +65,30 @@ export interface CadastroRegistro {
   razaoSocial: string;
   nomeFantasia: string;
   dataNascimento: string;
-  cep: string;
-  endereco: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-  banco: string;
-  agencia: string;
-  conta: string;
-  tipoConta: string;
-  pix: string;
+  enderecoCnpj: string;
+  vinculoCnpj: string;
+  nomeTestemunha: string;
+  rgTestemunha: string;
+  emailTestemunha: string;
+  observacoes: string;
+  cep?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  banco?: string;
+  agencia?: string;
+  conta?: string;
+  tipoConta?: string;
+  pix?: string;
   driveLink?: string;
+  pastaDriveId?: string;
+  pastaDriveUrl?: string;
+  tipoOperacao?: string;
+  dataInativacao?: string;
+  motivoInativacao?: string;
 }
 
 export const UFS_BRASIL = [

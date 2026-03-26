@@ -24,6 +24,8 @@ export default function Cadastro() {
   const [step, setStep] = useState(0);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [protocolo, setProtocolo] = useState("");
+  const [erroEnvio, setErroEnvio] = useState("");
   const [aceite, setAceite] = useState(false);
 
   const empresaForm = useForm<DadosEmpresa>({
@@ -86,18 +88,58 @@ export default function Cadastro() {
       return;
     }
     setSending(true);
+    setErroEnvio("");
+
     try {
-      await enviarCadastro({
-        empresa: empresaForm.getValues(),
-        profissional: profissionalForm.getValues(),
-        testemunha: testemunhaForm.getValues(),
-        documentos,
-      });
-      setSent(true);
-    } catch {
-      toast.error("Erro ao enviar cadastro. Tente novamente.");
+      const empresa = empresaForm.getValues();
+      const profissional = profissionalForm.getValues();
+      const testemunha = testemunhaForm.getValues();
+
+      const dados = {
+        cnpj: empresa.cnpj,
+        razaoSocial: empresa.razaoSocial,
+        nomeFantasia: empresa.nomeFantasia || "",
+        enderecoCnpj: empresa.enderecoCnpj,
+        vinculoCnpj: empresa.vinculoCnpj,
+        nomeCompleto: profissional.nomeCompleto,
+        cpf: profissional.cpf,
+        dataNascimento: profissional.dataNascimento,
+        crm: profissional.crm,
+        ufCrm: profissional.ufCrm,
+        especialidade: profissional.especialidade,
+        email: profissional.email,
+        telefone: profissional.telefone,
+        nomeTestemunha: testemunha.nomeTestemunha,
+        rgTestemunha: testemunha.rgTestemunha,
+        emailTestemunha: testemunha.emailTestemunha,
+        observacoes: `Nome Fantasia: ${empresa.nomeFantasia || "N/A"}`,
+      };
+
+      const arquivos = {
+        arquivo_rg: documentos.arquivoRg!.file,
+        arquivo_cpf: documentos.arquivoCpf!.file,
+        arquivo_crm: documentos.arquivoCrm!.file,
+        arquivo_contrato: documentos.arquivoContrato!.file,
+        arquivo_dados_bancarios: documentos.arquivoDadosBancarios!.file,
+        arquivo_rg_testemunha: documentos.arquivoRgTestemunha!.file,
+        arquivo_declaracao_vinculo: empresa.vinculoCnpj === "Contratado" ? documentos.arquivoDeclaracaoVinculo?.file : undefined,
+      };
+
+      const resultado = await enviarCadastro(dados, arquivos);
+
+      if (resultado.sucesso === true) {
+        setProtocolo(resultado.id_unico || "");
+        setSent(true);
+      } else {
+        throw new Error(resultado.mensagem || "Erro ao enviar cadastro");
+      }
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : "Erro ao enviar cadastro. Tente novamente.";
+      setErroEnvio(mensagem);
+      toast.error(mensagem);
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   if (sent) {
@@ -109,10 +151,29 @@ export default function Cadastro() {
               <CheckCircle className="w-10 h-10 text-primary" />
             </div>
             <h2 className="font-heading font-bold text-2xl text-foreground mb-2">Cadastro enviado com sucesso!</h2>
-            <p className="text-muted-foreground mb-8">Seus dados foram recebidos e serão analisados em breve.</p>
+            <p className="text-muted-foreground mb-2">Seus dados foram recebidos e serão analisados em breve.</p>
+            {protocolo && <p className="text-sm font-medium text-foreground mb-8">Protocolo: {protocolo}</p>}
             <Button onClick={() => navigate("/")} className="bg-primary hover:bg-primary-dark text-primary-foreground">
               Voltar ao início
             </Button>
+          </div>
+        </div>
+      </MinimalLayout>
+    );
+  }
+
+  if (erroEnvio) {
+    return (
+      <MinimalLayout title="Cadastro Médico PJ" showBack={false}>
+        <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)] px-6">
+          <div className="text-center animate-fade-in max-w-md">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6">
+              <h2 className="font-heading font-bold text-2xl text-destructive mb-2">Erro ao enviar cadastro</h2>
+              <p className="text-sm text-foreground mb-6">{erroEnvio}</p>
+              <Button onClick={() => setErroEnvio("")} className="bg-primary hover:bg-primary-dark text-primary-foreground">
+                Tentar novamente
+              </Button>
+            </div>
           </div>
         </div>
       </MinimalLayout>
@@ -198,7 +259,7 @@ export default function Cadastro() {
         <div className="fixed inset-0 bg-foreground/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-card rounded-xl p-8 text-center shadow-lg">
             <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
-            <p className="font-heading font-semibold text-foreground">Enviando cadastro...</p>
+            <p className="font-heading font-semibold text-foreground">Enviando cadastro e documentos...</p>
           </div>
         </div>
       )}
