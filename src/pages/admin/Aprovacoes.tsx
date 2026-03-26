@@ -16,6 +16,7 @@ export default function Aprovacoes() {
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [usandoMock, setUsandoMock] = useState(false);
+  const [processando, setProcessando] = useState<string | null>(null);
 
   const carregar = async () => {
     setLoading(true);
