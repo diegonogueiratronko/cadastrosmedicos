@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, CheckCircle, FolderOpen,
-  Settings, LogOut, Bell, HelpCircle, User,
+  Settings, LogOut, Bell, HelpCircle, User, Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
@@ -12,6 +12,7 @@ const menuItems = [
   { label: "Cadastros", icon: ClipboardList, path: "/admin/cadastros" },
   { label: "Pendentes", icon: FolderOpen, path: "/admin/aprovacoes" },
   { label: "Aprovados", icon: CheckCircle, path: "/admin/documentos" },
+  { label: "Insights IA", icon: Sparkles, path: "/admin/insights", badge: "IA" },
   { label: "Configurações", icon: Settings, path: "/admin/configuracoes" },
 ];
 
@@ -20,6 +21,7 @@ const pageTitles: Record<string, string> = {
   "/admin/cadastros": "Cadastros",
   "/admin/aprovacoes": "Pendentes",
   "/admin/documentos": "Aprovados",
+  "/admin/insights": "Insights com IA",
   "/admin/configuracoes": "Configurações",
 };
 
@@ -62,6 +64,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             >
               <item.icon className="w-4 h-4" />
               <span>{item.label}</span>
+              {(item as any).badge && (
+                <span className="ml-auto text-[10px] font-bold bg-[#8B5CF6] text-white px-1.5 py-0.5 rounded-full">{(item as any).badge}</span>
+              )}
             </NavLink>
           ))}
         </nav>
