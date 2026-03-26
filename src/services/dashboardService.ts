@@ -137,9 +137,13 @@ export async function executarAcao(idUnico: string, novoStatus: string, motivo: 
   });
 
   if (!response.ok) {
-    const erro = await response.json().catch(() => ({ mensagem: "Erro ao executar ação" }));
-    throw new Error(erro.mensagem || "Erro ao atualizar status");
+    const erro = await response.text();
+    let msg = "Erro ao atualizar status";
+    try { msg = JSON.parse(erro).mensagem || msg; } catch {}
+    throw new Error(msg);
   }
 
-  return await response.json();
+  const text = await response.text();
+  if (!text) return { sucesso: true };
+  try { return JSON.parse(text); } catch { return { sucesso: true }; }
 }
