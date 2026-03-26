@@ -237,7 +237,7 @@ export default function Insights() {
           <div className="flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-[#8B5CF6]" />
             <h2 className="font-heading font-bold text-lg text-foreground">Insights com IA</h2>
-            <span className="text-[10px] font-bold bg-[#8B5CF6] text-white px-2 py-0.5 rounded-full">Powered by Claude</span>
+            <span className="text-[10px] font-bold bg-[#8B5CF6] text-white px-2 py-0.5 rounded-full">Powered by Tronko - Inovação</span>
           </div>
           <Button variant="outline" size="sm" onClick={carregar} disabled={loading || loadingIA}>
             {(loading || loadingIA) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}

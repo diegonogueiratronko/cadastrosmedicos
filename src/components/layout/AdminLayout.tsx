@@ -47,8 +47,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <span className="text-sidebar-primary-foreground font-heading font-bold text-sm">T</span>
           </div>
           <div>
-            <span className="font-heading font-bold text-tertiary">Tronko</span>
-            <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-wider">Unimed CNU</p>
+            <span className="font-heading font-bold text-tertiary">Cadastros Médicos</span>
+            <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-wider">Tronko - Inovação</p>
           </div>
         </div>
 
