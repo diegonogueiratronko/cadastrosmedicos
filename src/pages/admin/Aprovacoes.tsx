@@ -45,7 +45,7 @@ export default function Aprovacoes() {
     try {
       await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
       toast.success("Cadastro aprovado! Email enviado ao médico.");
-      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
+      await carregar();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao aprovar cadastro");
     } finally {
@@ -65,7 +65,7 @@ export default function Aprovacoes() {
       toast.success("Cadastro rejeitado. Email enviado ao médico com o motivo.");
       setRejeitando(null);
       setMotivo("");
-      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
+      await carregar();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao rejeitar cadastro");
     } finally {
