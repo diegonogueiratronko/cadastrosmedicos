@@ -40,14 +40,16 @@ export default function Aprovacoes() {
   }, []);
 
   const aprovar = async (idUnico: string) => {
+    if (processando) return;
+    setProcessando(idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
-      if (resultado.sucesso) {
-        toast.success("Cadastro aprovado! Email enviado ao médico.");
-        await carregar();
-      }
+      await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
+      toast.success("Cadastro aprovado! Email enviado ao médico.");
+      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao aprovar cadastro");
+    } finally {
+      setProcessando(null);
     }
   };
 
@@ -56,17 +58,18 @@ export default function Aprovacoes() {
       toast.error("Informe o motivo da rejeição.");
       return;
     }
-
+    if (processando) return;
+    setProcessando(idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
-      if (resultado.sucesso) {
-        toast.success("Cadastro rejeitado. Email enviado ao médico com o motivo.");
-        setRejeitando(null);
-        setMotivo("");
-        await carregar();
-      }
+      await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
+      toast.success("Cadastro rejeitado. Email enviado ao médico com o motivo.");
+      setRejeitando(null);
+      setMotivo("");
+      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao rejeitar cadastro");
+    } finally {
+      setProcessando(null);
     }
   };
 
