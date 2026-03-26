@@ -16,6 +16,7 @@ export default function Aprovacoes() {
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [usandoMock, setUsandoMock] = useState(false);
+  const [processando, setProcessando] = useState<string | null>(null);
 
   const carregar = async () => {
     setLoading(true);
@@ -39,14 +40,16 @@ export default function Aprovacoes() {
   }, []);
 
   const aprovar = async (idUnico: string) => {
+    if (processando) return;
+    setProcessando(idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
-      if (resultado.sucesso) {
-        toast.success("Cadastro aprovado! Email enviado ao médico.");
-        await carregar();
-      }
+      await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
+      toast.success("Cadastro aprovado! Email enviado ao médico.");
+      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao aprovar cadastro");
+    } finally {
+      setProcessando(null);
     }
   };
 
@@ -55,17 +58,18 @@ export default function Aprovacoes() {
       toast.error("Informe o motivo da rejeição.");
       return;
     }
-
+    if (processando) return;
+    setProcessando(idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
-      if (resultado.sucesso) {
-        toast.success("Cadastro rejeitado. Email enviado ao médico com o motivo.");
-        setRejeitando(null);
-        setMotivo("");
-        await carregar();
-      }
+      await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
+      toast.success("Cadastro rejeitado. Email enviado ao médico com o motivo.");
+      setRejeitando(null);
+      setMotivo("");
+      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao rejeitar cadastro");
+    } finally {
+      setProcessando(null);
     }
   };
 
@@ -106,10 +110,10 @@ export default function Aprovacoes() {
                 <p className="text-sm text-muted-foreground">CRM {c.crm}/{c.ufCrm} · {c.especialidade} · {c.dataCadastro}</p>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => aprovar(c.idUnico)} className="bg-primary hover:bg-primary-dark text-primary-foreground">
-                  <CheckCircle className="w-4 h-4 mr-1" /> Aprovar
+                <Button size="sm" disabled={!!processando} onClick={() => aprovar(c.idUnico)} className="bg-primary hover:bg-primary-dark text-primary-foreground">
+                  {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />} Aprovar
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setRejeitando(rejeitando === c.idUnico ? null : c.idUnico)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                <Button size="sm" variant="outline" disabled={!!processando} onClick={() => setRejeitando(rejeitando === c.idUnico ? null : c.idUnico)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
                   <XCircle className="w-4 h-4 mr-1" /> Rejeitar
                 </Button>
               </div>
@@ -121,10 +125,11 @@ export default function Aprovacoes() {
                   value={motivo}
                   onChange={(e) => setMotivo(e.target.value)}
                   placeholder="Motivo da rejeição..."
+                  disabled={!!processando}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
                 />
-                <Button size="sm" variant="destructive" onClick={() => rejeitar(c.idUnico)}>
-                  Confirmar Rejeição
+                <Button size="sm" variant="destructive" disabled={!!processando} onClick={() => rejeitar(c.idUnico)}>
+                  {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null} Confirmar Rejeição
                 </Button>
               </div>
             )}
