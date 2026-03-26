@@ -45,7 +45,7 @@ export default function LoginAdmin() {
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    type="email"
+                    type="text"
                     placeholder="Digite seu usuário"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErro(""); }}
