@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockCadastros } from "@/services/mockData";
+import { fetchCadastros } from "@/services/dashboardService";
 import { StatusCadastro, CadastroRegistro } from "@/types/cadastro";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -15,11 +15,22 @@ const statusColors: Record<StatusCadastro, string> = {
 };
 
 export default function Cadastros() {
+  const [cadastros, setCadastros] = useState<CadastroRegistro[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [selected, setSelected] = useState<CadastroRegistro | null>(null);
 
-  const filtered = mockCadastros.filter((c) => {
+  useEffect(() => {
+    setLoading(true);
+    fetchCadastros()
+      .then(setCadastros)
+      .catch(() => setError("Erro ao carregar cadastros."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = cadastros.filter((c) => {
     const matchSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
       c.crm.includes(search) || c.cpf.includes(search);
     const matchStatus = statusFilter === "TODOS" || c.status === statusFilter;
@@ -52,38 +63,55 @@ export default function Cadastros() {
           </select>
         </div>
 
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50">
-                  {["Nome", "CNPJ", "CRM", "UF", "Especialidade", "Email", "Status", "Data", "Ações"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((c) => (
-                  <tr key={c.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{c.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.cnpj}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.crm}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.ufCrm}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.especialidade}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[c.status]}`}>{c.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.dataCadastro}</td>
-                    <td className="px-4 py-3">
-                      <Button variant="outline" size="sm" onClick={() => setSelected(c)}>Ver</Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
-        </div>
+        )}
+
+        {error && <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>}
+
+        {!loading && !error && filtered.length === 0 && (
+          <div className="bg-card rounded-xl p-12 text-center border border-border">
+            <p className="font-heading font-semibold text-foreground">Nenhum cadastro encontrado</p>
+            <p className="text-sm text-muted-foreground mt-1">Os dados serão carregados via integração n8n.</p>
+          </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/50">
+                    {["Nome", "CNPJ", "CRM", "UF", "Especialidade", "Email", "Status", "Data", "Ações"].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 font-medium text-muted-foreground whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((c) => (
+                    <tr key={c.id} className="border-t border-border hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{c.nome}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.cnpj}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.crm}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.ufCrm}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.especialidade}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.email}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[c.status]}`}>{c.status}</span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.dataCadastro}</td>
+                      <td className="px-4 py-3">
+                        <Button variant="outline" size="sm" onClick={() => setSelected(c)}>Ver</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
@@ -96,8 +124,7 @@ export default function Cadastros() {
               {Object.entries({
                 CPF: selected.cpf, CNPJ: selected.cnpj, CRM: `${selected.crm}/${selected.ufCrm}`,
                 Especialidade: selected.especialidade, Email: selected.email, Telefone: selected.telefone,
-                "Razão Social": selected.razaoSocial, Endereço: `${selected.endereco}, ${selected.bairro} - ${selected.cidade}/${selected.estado}`,
-                Banco: `${selected.banco} Ag: ${selected.agencia} Cc: ${selected.conta}`,
+                "Razão Social": selected.razaoSocial, Endereço: `${selected.endereco} - ${selected.cidade}/${selected.estado}`,
               }).map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-muted-foreground">{k}</span>

@@ -1,16 +1,25 @@
-import { useState } from "react";
-import { CheckCircle, XCircle, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
-import { mockCadastros } from "@/services/mockData";
+import { fetchCadastros } from "@/services/dashboardService";
+import { CadastroRegistro } from "@/types/cadastro";
 import { toast } from "sonner";
 
 export default function Aprovacoes() {
-  const [cadastros, setCadastros] = useState(
-    mockCadastros.filter((c) => c.status === "PENDENTE")
-  );
+  const [cadastros, setCadastros] = useState<CadastroRegistro[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    fetchCadastros()
+      .then((data) => setCadastros(data.filter(c => c.status === "PENDENTE")))
+      .catch(() => setError("Erro ao carregar cadastros."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const aprovar = (id: string) => {
     setCadastros((prev) => prev.filter((c) => c.id !== id));
@@ -31,12 +40,23 @@ export default function Aprovacoes() {
   return (
     <AdminLayout>
       <div className="space-y-4 animate-fade-in">
-        <p className="text-sm text-muted-foreground">{cadastros.length} cadastro(s) pendente(s)</p>
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        )}
 
-        {cadastros.length === 0 && (
+        {error && <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>}
+
+        {!loading && !error && (
+          <p className="text-sm text-muted-foreground">{cadastros.length} cadastro(s) pendente(s)</p>
+        )}
+
+        {!loading && cadastros.length === 0 && !error && (
           <div className="bg-card rounded-xl p-12 text-center border border-border">
             <CheckCircle className="w-10 h-10 text-primary mx-auto mb-3" />
             <p className="font-heading font-semibold text-foreground">Nenhum cadastro pendente</p>
+            <p className="text-sm text-muted-foreground mt-1">Os dados serão carregados via integração n8n.</p>
           </div>
         )}
 
@@ -55,15 +75,6 @@ export default function Aprovacoes() {
                   <XCircle className="w-4 h-4 mr-1" /> Rejeitar
                 </Button>
               </div>
-            </div>
-
-            {/* Checklist docs */}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["RG/CNH", "CPF", "CRM", "Contrato Social", "Comp. Endereço"].map((doc) => (
-                <span key={doc} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-primary/10 text-primary">
-                  <FileText className="w-3 h-3" /> {doc}
-                </span>
-              ))}
             </div>
 
             {rejeitando === c.id && (
