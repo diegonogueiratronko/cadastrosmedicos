@@ -1,40 +1,113 @@
 import { UseFormReturn } from "react-hook-form";
-import { DadosEmpresa } from "@/types/cadastro";
+import { DadosEmpresa, ArquivoUpload } from "@/types/cadastro";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { maskCNPJ } from "@/utils/masks";
+import { Upload, Check, FileText } from "lucide-react";
+import { validateFile, formatFileSize } from "@/utils/fileUtils";
+import { toast } from "sonner";
 
 interface Props {
   form: UseFormReturn<DadosEmpresa>;
+  declaracaoVinculo: ArquivoUpload | null;
+  onDeclaracaoChange: (file: ArquivoUpload | null) => void;
 }
 
-export default function StepDadosEmpresa({ form }: Props) {
+export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracaoChange }: Props) {
   const { register, setValue, watch, formState: { errors } } = form;
+  const vinculo = watch("vinculoCnpj");
+
+  const handleFileChange = (file: File) => {
+    const error = validateFile(file);
+    if (error) { toast.error(error); return; }
+    onDeclaracaoChange({ file, name: file.name, size: file.size, type: file.type });
+  };
 
   return (
     <div className="space-y-4 animate-fade-in">
       <h2 className="font-heading font-bold text-lg text-foreground">Dados da Empresa (PJ)</h2>
 
-      <div>
-        <label className="text-sm font-medium text-foreground">CNPJ <span className="text-destructive">*</span></label>
-        <Input
-          {...register("cnpj")}
-          placeholder="XX.XXX.XXX/XXXX-XX"
-          value={watch("cnpj")}
-          onChange={(e) => setValue("cnpj", maskCNPJ(e.target.value), { shouldValidate: true })}
-        />
-        {errors.cnpj && <p className="text-sm text-destructive mt-1">{errors.cnpj.message}</p>}
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-foreground">Razão Social <span className="text-destructive">*</span></label>
-        <Input {...register("razaoSocial")} placeholder="Razão social da empresa" />
-        {errors.razaoSocial && <p className="text-sm text-destructive mt-1">{errors.razaoSocial.message}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-foreground">CNPJ <span className="text-destructive">*</span></label>
+          <Input
+            {...register("cnpj")}
+            placeholder="XX.XXX.XXX/XXXX-XX"
+            value={watch("cnpj")}
+            onChange={(e) => setValue("cnpj", maskCNPJ(e.target.value), { shouldValidate: true })}
+          />
+          {errors.cnpj && <p className="text-sm text-destructive mt-1">{errors.cnpj.message}</p>}
+        </div>
+        <div>
+          <label className="text-sm font-medium text-foreground">Razão Social <span className="text-destructive">*</span></label>
+          <Input {...register("razaoSocial")} placeholder="Razão social da empresa" />
+          {errors.razaoSocial && <p className="text-sm text-destructive mt-1">{errors.razaoSocial.message}</p>}
+        </div>
       </div>
 
       <div>
         <label className="text-sm font-medium text-foreground">Nome Fantasia</label>
         <Input {...register("nomeFantasia")} placeholder="Nome fantasia (opcional)" />
       </div>
+
+      <div>
+        <label className="text-sm font-medium text-foreground">Endereço do CNPJ <span className="text-destructive">*</span></label>
+        <Textarea
+          {...register("enderecoCnpj")}
+          placeholder="Ex: Av. Paulista, 1000 - Bela Vista, São Paulo - SP"
+          rows={2}
+        />
+        {errors.enderecoCnpj && <p className="text-sm text-destructive mt-1">{errors.enderecoCnpj.message}</p>}
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-foreground">Vínculo com o CNPJ <span className="text-destructive">*</span></label>
+        <select
+          {...register("vinculoCnpj")}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="">Selecione...</option>
+          <option value="Sócio">Sócio</option>
+          <option value="Proprietário">Proprietário</option>
+          <option value="Contratado">Contratado (Declaração de Vínculo)</option>
+        </select>
+        {errors.vinculoCnpj && <p className="text-sm text-destructive mt-1">{errors.vinculoCnpj.message}</p>}
+      </div>
+
+      {vinculo === "Contratado" && (
+        <div className={`rounded-lg border-2 border-dashed p-4 transition-colors ${
+          declaracaoVinculo ? "border-primary/40 bg-primary/5" : "border-border"
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {declaracaoVinculo ? (
+                <Check className="w-5 h-5 text-primary" />
+              ) : (
+                <FileText className="w-5 h-5 text-muted-foreground" />
+              )}
+              <div>
+                <p className="text-sm font-medium text-foreground">Declaração de Vínculo <span className="text-destructive">*</span></p>
+                {declaracaoVinculo && (
+                  <p className="text-xs text-muted-foreground">{declaracaoVinculo.name} — {formatFileSize(declaracaoVinculo.size)}</p>
+                )}
+              </div>
+            </div>
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-muted hover:bg-muted/80 text-foreground transition-colors">
+              <Upload className="w-3.5 h-3.5" />
+              {declaracaoVinculo ? "Trocar" : "Enviar"}
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFileChange(f);
+                }}
+              />
+            </label>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
