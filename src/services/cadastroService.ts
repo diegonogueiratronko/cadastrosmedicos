@@ -1,57 +1,75 @@
 import { API_CONFIG } from "@/config/api";
-import { CadastroCompleto } from "@/types/cadastro";
-import { unmask } from "@/utils/masks";
 
-export async function enviarCadastro(dados: CadastroCompleto) {
-  const { empresa, profissional, testemunha, documentos } = dados;
+interface DadosCadastro {
+  cnpj: string;
+  razaoSocial: string;
+  nomeFantasia?: string;
+  enderecoCnpj: string;
+  vinculoCnpj: string;
+  nomeCompleto: string;
+  cpf: string;
+  dataNascimento: string;
+  crm: string;
+  ufCrm: string;
+  especialidade: string;
+  email: string;
+  telefone: string;
+  nomeTestemunha: string;
+  rgTestemunha: string;
+  emailTestemunha: string;
+  observacoes?: string;
+}
 
-  const fd = new FormData();
+interface ArquivosCadastro {
+  arquivo_rg: File;
+  arquivo_cpf: File;
+  arquivo_crm: File;
+  arquivo_contrato: File;
+  arquivo_dados_bancarios: File;
+  arquivo_rg_testemunha: File;
+  arquivo_declaracao_vinculo?: File;
+}
 
-  // Text fields
-  fd.append("nome", profissional.nomeCompleto.trim().toUpperCase());
-  fd.append("cpf", unmask(profissional.cpf));
-  fd.append("cnpj", unmask(empresa.cnpj));
-  fd.append("crm", profissional.crm.replace(/\D/g, ""));
-  fd.append("uf_crm", profissional.ufCrm.toUpperCase());
-  fd.append("email", profissional.email.trim().toLowerCase());
-  fd.append("telefone", unmask(profissional.telefone));
-  fd.append("especialidade", profissional.especialidade.trim());
-  fd.append("razao_social", empresa.razaoSocial.trim());
-  fd.append("data_nascimento", profissional.dataNascimento);
-  fd.append("endereco_cnpj", empresa.enderecoCnpj.trim());
-  fd.append("vinculo_cnpj", empresa.vinculoCnpj === "Contratado" ? "Contratado" : empresa.vinculoCnpj);
-  fd.append("nome_testemunha", testemunha.nomeTestemunha.trim());
-  fd.append("rg_testemunha", testemunha.rgTestemunha.trim());
-  fd.append("email_testemunha", testemunha.emailTestemunha.trim().toLowerCase());
+export async function enviarCadastro(dados: DadosCadastro, arquivos: ArquivosCadastro) {
+  const formData = new FormData();
 
-  // Observações — nome fantasia and any extras
-  const obs: string[] = [];
-  if (empresa.nomeFantasia?.trim()) obs.push(`Nome Fantasia: ${empresa.nomeFantasia.trim()}`);
-  fd.append("observacoes", obs.join(" | "));
+  formData.append("nome", dados.nomeCompleto.trim().toUpperCase());
+  formData.append("cpf", dados.cpf.replace(/\D/g, ""));
+  formData.append("cnpj", dados.cnpj.replace(/\D/g, ""));
+  formData.append("crm", dados.crm.replace(/\D/g, ""));
+  formData.append("uf_crm", dados.ufCrm.toUpperCase());
+  formData.append("email", dados.email.trim().toLowerCase());
+  formData.append("telefone", dados.telefone.replace(/\D/g, ""));
+  formData.append("especialidade", dados.especialidade.trim());
+  formData.append("razao_social", dados.razaoSocial.trim());
+  formData.append("data_nascimento", dados.dataNascimento);
+  formData.append("endereco_cnpj", dados.enderecoCnpj.trim());
+  formData.append("vinculo_cnpj", dados.vinculoCnpj);
+  formData.append("nome_testemunha", dados.nomeTestemunha.trim());
+  formData.append("rg_testemunha", dados.rgTestemunha.trim());
+  formData.append("email_testemunha", dados.emailTestemunha.trim().toLowerCase());
+  formData.append("observacoes", dados.observacoes || "");
 
-  // File fields
-  const fileMap: [string, File | undefined][] = [
-    ["arquivo_rg", documentos.arquivoRg?.file],
-    ["arquivo_cpf", documentos.arquivoCpf?.file],
-    ["arquivo_crm", documentos.arquivoCrm?.file],
-    ["arquivo_contrato", documentos.arquivoContrato?.file],
-    ["arquivo_dados_bancarios", documentos.arquivoDadosBancarios?.file],
-    ["arquivo_rg_testemunha", documentos.arquivoRgTestemunha?.file],
-  ];
+  formData.append("arquivo_rg", arquivos.arquivo_rg);
+  formData.append("arquivo_cpf", arquivos.arquivo_cpf);
+  formData.append("arquivo_crm", arquivos.arquivo_crm);
+  formData.append("arquivo_contrato", arquivos.arquivo_contrato);
+  formData.append("arquivo_dados_bancarios", arquivos.arquivo_dados_bancarios);
+  formData.append("arquivo_rg_testemunha", arquivos.arquivo_rg_testemunha);
 
-  if (empresa.vinculoCnpj === "Contratado" && documentos.arquivoDeclaracaoVinculo?.file) {
-    fileMap.push(["arquivo_declaracao_vinculo", documentos.arquivoDeclaracaoVinculo.file]);
+  if (arquivos.arquivo_declaracao_vinculo) {
+    formData.append("arquivo_declaracao_vinculo", arquivos.arquivo_declaracao_vinculo);
   }
 
-  for (const [key, file] of fileMap) {
-    if (file) fd.append(key, file, file.name);
-  }
-
-  const res = await fetch(API_CONFIG.WEBHOOK_CADASTRO, {
+  const response = await fetch(API_CONFIG.WEBHOOK_CADASTRO, {
     method: "POST",
-    body: fd,
+    body: formData,
   });
 
-  if (!res.ok) throw new Error(`Erro ao enviar: ${res.status}`);
-  return await res.json();
+  if (!response.ok) {
+    const erro = await response.json().catch(() => ({ mensagem: "Erro de conexão com o servidor" }));
+    throw new Error(erro.mensagem || "Erro ao enviar cadastro");
+  }
+
+  return await response.json();
 }
