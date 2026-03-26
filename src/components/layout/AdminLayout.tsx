@@ -142,7 +142,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Footer */}
         <footer className="py-3 px-6 flex items-center justify-between text-xs text-muted-foreground border-t border-border">
-          <span><span className="text-primary font-medium">Cadastros Médicos</span> | © 2025 Tronko - Inovação</span>
+          <span><span className="text-primary font-medium">Cadastros Médicos</span> | © 2026 Tronko - Inovação</span>
           <div className="flex items-center gap-4">
             <span className="hover:text-foreground cursor-pointer transition-colors">Privacidade</span>
             <span className="hover:text-foreground cursor-pointer transition-colors">Termos</span>

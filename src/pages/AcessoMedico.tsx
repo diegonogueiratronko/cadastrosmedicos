@@ -64,7 +64,7 @@ export default function AcessoMedico() {
 
       {/* Footer */}
       <footer className="py-4 flex items-center justify-center gap-6 text-xs text-white/40 relative z-10">
-        <span>© 2025 TRONKO SYSTEM</span>
+        <span>© 2026 TRONKO - INOVAÇÃO</span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-tertiary" />
           Unimed CNU
