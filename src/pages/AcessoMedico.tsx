@@ -56,7 +56,7 @@ export default function AcessoMedico() {
             </Button>
 
             <div className="mt-5 pt-4 border-t border-border text-center">
-              <p className="text-xs text-muted-foreground">Acesso exclusivo para médicos credenciados</p>
+              <p className="text-xs text-muted-foreground">Acesso exclusivo para credenciamento médico</p>
             </div>
           </div>
         </form>
