@@ -3,7 +3,8 @@ import { Users, Clock, CheckCircle, XCircle, RefreshCw, Loader2 } from "lucide-r
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
-import { fetchCadastros, fetchKPIs, DashboardKPIs } from "@/services/dashboardService";
+import { buscarCadastros, DashboardData } from "@/services/dashboardService";
+import { mockDashboardData } from "@/services/dashboardMock";
 import { CadastroRegistro, StatusCadastro } from "@/types/cadastro";
 
 const statusColors: Record<StatusCadastro, string> = {
@@ -14,44 +15,42 @@ const statusColors: Record<StatusCadastro, string> = {
 };
 
 const kpiBarColors = ["bg-primary", "bg-tertiary", "bg-primary", "bg-destructive"];
-const PIE_COLORS = ["#004E4C", "#00995D", "#B1D34B", "#006644"];
 
 export default function Dashboard() {
-  const [cadastros, setCadastros] = useState<CadastroRegistro[]>([]);
-  const [kpis, setKpis] = useState<DashboardKPIs>({ total: 0, pendentes: 0, aprovados: 0, rejeitados: 0 });
+  const [dados, setDados] = useState<DashboardData>(mockDashboardData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [usandoMock, setUsandoMock] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
     setError("");
-    try {
-      const [data, kpiData] = await Promise.all([fetchCadastros(), fetchKPIs()]);
-      setCadastros(data);
-      setKpis(kpiData);
-    } catch {
-      setError("Não foi possível carregar os dados. Verifique a conexão com o n8n.");
+    const resultado = await buscarCadastros();
+    if (resultado && resultado.kpis) {
+      setDados(resultado);
+      setUsandoMock(false);
+    } else {
+      setDados(mockDashboardData);
+      setUsandoMock(true);
+      setError("Não foi possível carregar os dados reais. Exibindo dados de demonstração.");
     }
     setLoading(false);
   };
 
   useEffect(() => { loadData(); }, []);
 
-  const specialtyData = cadastros.reduce<Record<string, number>>((acc, c) => {
-    acc[c.especialidade] = (acc[c.especialidade] || 0) + 1;
-    return acc;
-  }, {});
-  const specialtyChartData = Object.entries(specialtyData)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
+  const cadastros = dados.cadastros;
+  const kpis = dados.kpis;
 
-  const recentCadastros = cadastros.slice(0, 5);
+  const specialtyChartData = dados.top_especialidades.map((item) => ({ name: item.nome, value: item.total }));
+
+  const recentCadastros = dados.ultimos_cadastros.length > 0 ? dados.ultimos_cadastros.slice(0, 5) : cadastros.slice(0, 5);
 
   const kpiCards = [
     { label: "TOTAL DE MÉDICOS", value: kpis.total, sub: "Cadastros no sistema", icon: Users },
-    { label: "AGUARDANDO VALIDAÇÃO", value: kpis.pendentes, sub: "Pendentes de análise", icon: Clock },
-    { label: "APROVADOS", value: kpis.aprovados, sub: "Cadastros finalizados", icon: CheckCircle },
-    { label: "REJEITADOS", value: kpis.rejeitados, sub: "Requer atenção", icon: XCircle },
+    { label: "AGUARDANDO VALIDAÇÃO", value: kpis.pendente, sub: "Pendentes de análise", icon: Clock },
+    { label: "APROVADOS", value: kpis.ok, sub: "Cadastros finalizados", icon: CheckCircle },
+    { label: "REJEITADOS", value: kpis.erro, sub: "Requer atenção", icon: XCircle },
   ];
 
   return (
@@ -64,6 +63,12 @@ export default function Dashboard() {
             Atualizar
           </Button>
         </div>
+
+        {usandoMock && (
+          <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground border border-border">
+            Dados de demonstração
+          </div>
+        )}
 
         {error && (
           <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>
@@ -111,8 +116,8 @@ export default function Dashboard() {
                   <Pie
                     data={[
                       { name: "Aprovados", value: kpis.aprovados || 0 },
-                      { name: "Pendentes", value: kpis.pendentes || 0 },
-                      { name: "Rejeitados", value: kpis.rejeitados || 0 },
+                      { name: "Pendentes", value: kpis.pendente || 0 },
+                      { name: "Rejeitados", value: kpis.erro || 0 },
                     ].filter(d => d.value > 0)}
                     dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={70}
                   >

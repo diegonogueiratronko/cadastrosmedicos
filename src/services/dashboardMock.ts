@@ -1,6 +1,7 @@
 import { DashboardData } from "@/services/dashboardService";
+import { CadastroRegistro } from "@/types/cadastro";
 
-const cadastros = [
+const cadastros: CadastroRegistro[] = [
   {
     id: "DEMO-001",
     idUnico: "DEMO-001",

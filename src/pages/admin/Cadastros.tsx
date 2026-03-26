@@ -3,7 +3,8 @@ import { Search, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { fetchCadastros } from "@/services/dashboardService";
+import { buscarCadastros } from "@/services/dashboardService";
+import { mockDashboardData } from "@/services/dashboardMock";
 import { StatusCadastro, CadastroRegistro } from "@/types/cadastro";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -21,13 +22,27 @@ export default function Cadastros() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [selected, setSelected] = useState<CadastroRegistro | null>(null);
+  const [usandoMock, setUsandoMock] = useState(false);
+
+  const carregar = async () => {
+    setLoading(true);
+    setError("");
+
+    const resultado = await buscarCadastros();
+    if (resultado && resultado.kpis) {
+      setCadastros(resultado.cadastros);
+      setUsandoMock(false);
+    } else {
+      setCadastros(mockDashboardData.cadastros);
+      setUsandoMock(true);
+      setError("Não foi possível carregar os dados reais. Exibindo dados de demonstração.");
+    }
+
+    setLoading(false);
+  };
 
   useEffect(() => {
-    setLoading(true);
-    fetchCadastros()
-      .then(setCadastros)
-      .catch(() => setError("Erro ao carregar cadastros."))
-      .finally(() => setLoading(false));
+    carregar();
   }, []);
 
   const filtered = cadastros.filter((c) => {
@@ -61,7 +76,14 @@ export default function Cadastros() {
             <option value="ERRO">Rejeitado</option>
             <option value="INATIVO">Inativo</option>
           </select>
+          <Button variant="outline" onClick={carregar} disabled={loading}>Atualizar</Button>
         </div>
+
+        {usandoMock && (
+          <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground border border-border">
+            Dados de demonstração
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center justify-center py-12">
@@ -124,7 +146,8 @@ export default function Cadastros() {
               {Object.entries({
                 CPF: selected.cpf, CNPJ: selected.cnpj, CRM: `${selected.crm}/${selected.ufCrm}`,
                 Especialidade: selected.especialidade, Email: selected.email, Telefone: selected.telefone,
-                "Razão Social": selected.razaoSocial, Endereço: `${selected.endereco} - ${selected.cidade}/${selected.estado}`,
+                "Razão Social": selected.razaoSocial, "Endereço do CNPJ": selected.enderecoCnpj,
+                Vínculo: selected.vinculoCnpj, Testemunha: selected.nomeTestemunha, "RG Testemunha": selected.rgTestemunha,
               }).map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-muted-foreground">{k}</span>
