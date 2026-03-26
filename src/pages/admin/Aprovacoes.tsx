@@ -110,10 +110,10 @@ export default function Aprovacoes() {
                 <p className="text-sm text-muted-foreground">CRM {c.crm}/{c.ufCrm} · {c.especialidade} · {c.dataCadastro}</p>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => aprovar(c.idUnico)} className="bg-primary hover:bg-primary-dark text-primary-foreground">
-                  <CheckCircle className="w-4 h-4 mr-1" /> Aprovar
+                <Button size="sm" disabled={!!processando} onClick={() => aprovar(c.idUnico)} className="bg-primary hover:bg-primary-dark text-primary-foreground">
+                  {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />} Aprovar
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setRejeitando(rejeitando === c.idUnico ? null : c.idUnico)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                <Button size="sm" variant="outline" disabled={!!processando} onClick={() => setRejeitando(rejeitando === c.idUnico ? null : c.idUnico)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
                   <XCircle className="w-4 h-4 mr-1" /> Rejeitar
                 </Button>
               </div>
@@ -125,10 +125,11 @@ export default function Aprovacoes() {
                   value={motivo}
                   onChange={(e) => setMotivo(e.target.value)}
                   placeholder="Motivo da rejeição..."
+                  disabled={!!processando}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
                 />
-                <Button size="sm" variant="destructive" onClick={() => rejeitar(c.idUnico)}>
-                  Confirmar Rejeição
+                <Button size="sm" variant="destructive" disabled={!!processando} onClick={() => rejeitar(c.idUnico)}>
+                  {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null} Confirmar Rejeição
                 </Button>
               </div>
             )}
