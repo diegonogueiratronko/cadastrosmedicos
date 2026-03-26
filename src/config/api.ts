@@ -4,9 +4,8 @@ export const API_CONFIG = {
   WEBHOOK_ACAO: "https://tronkoinovacao.app.n8n.cloud/webhook/acao-cadastro",
 };
 
-export const SENHA_MEDICO = "unimed2025";
+export const SENHA_MEDICO = "2026";
 
 export const ADMIN_CREDENTIALS = [
-  { email: "admin@unimed.com", senha: "tronko2025", nome: "Administrador" },
-  { email: "joyce@unimed.com", senha: "tronko2025", nome: "Joyce" },
+  { email: "tronko", senha: "tronko@2026", nome: "Administrador" },
 ];
