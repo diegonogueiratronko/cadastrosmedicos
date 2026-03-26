@@ -6,48 +6,59 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 28% 17%;
+    /* Primary: Dark Teal #004E4C */
+    --background: 30 30% 89%;
+    --foreground: 179 100% 15%;
 
+    /* Cards: white */
     --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
+    --card-foreground: 179 100% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
+    --popover-foreground: 179 100% 15%;
 
-    --primary: 152 100% 33%;
+    /* Primary: Secondary green #00995D */
+    --primary: 157 100% 30%;
     --primary-foreground: 0 0% 100%;
+    --primary-dark: 179 100% 15%;
 
-    --primary-dark: 152 100% 24%;
-
-    --secondary: 263 91% 66%;
+    /* Secondary: Dark Teal #004E4C */
+    --secondary: 179 100% 15%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* Tertiary: Lime #B1D34B */
+    --tertiary: 75 60% 56%;
+    --tertiary-foreground: 179 100% 15%;
 
-    --accent: 330 82% 60%;
-    --accent-foreground: 0 0% 100%;
+    /* Muted: lighter beige */
+    --muted: 30 20% 93%;
+    --muted-foreground: 179 20% 40%;
 
-    --destructive: 0 84% 60%;
+    /* Accent: Lime */
+    --accent: 75 60% 56%;
+    --accent-foreground: 179 100% 15%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 152 100% 33%;
+    --border: 30 15% 82%;
+    --input: 30 15% 82%;
+    --ring: 157 100% 30%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 28% 17%;
-    --sidebar-primary: 263 91% 66%;
+    /* Sidebar: dark teal */
+    --sidebar-background: 179 100% 15%;
+    --sidebar-foreground: 30 30% 89%;
+    --sidebar-primary: 157 100% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 263 91% 96%;
-    --sidebar-accent-foreground: 263 91% 40%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 263 91% 66%;
+    --sidebar-accent: 157 100% 30%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 179 60% 22%;
+    --sidebar-ring: 157 100% 30%;
+    --sidebar-muted: 179 40% 25%;
 
-    --success: 152 100% 33%;
+    --success: 157 100% 30%;
     --warning: 38 92% 50%;
     --info: 217 91% 60%;
   }
@@ -68,5 +79,34 @@
 @layer components {
   .glass-card {
     @apply bg-card/80 backdrop-blur-xl;
+  }
+
+  /* Dark teal fullscreen background for auth pages */
+  .auth-bg {
+    background-color: hsl(179 100% 15%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .auth-bg::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: hsl(157 100% 30% / 0.25);
+  }
+
+  .auth-bg::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -80px;
+    width: 350px;
+    height: 350px;
+    border-radius: 50%;
+    background: hsl(75 60% 56% / 0.12);
   }
 }
