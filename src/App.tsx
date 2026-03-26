@@ -14,6 +14,7 @@ import Cadastros from "./pages/admin/Cadastros";
 import Aprovacoes from "./pages/admin/Aprovacoes";
 import Documentos from "./pages/admin/Documentos";
 import Configuracoes from "./pages/admin/Configuracoes";
+import Insights from "./pages/admin/Insights";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/admin/cadastros" element={<RequireAdmin><Cadastros /></RequireAdmin>} />
             <Route path="/admin/aprovacoes" element={<RequireAdmin><Aprovacoes /></RequireAdmin>} />
             <Route path="/admin/documentos" element={<RequireAdmin><Documentos /></RequireAdmin>} />
+            <Route path="/admin/insights" element={<RequireAdmin><Insights /></RequireAdmin>} />
             <Route path="/admin/configuracoes" element={<RequireAdmin><Configuracoes /></RequireAdmin>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
