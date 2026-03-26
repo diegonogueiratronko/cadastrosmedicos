@@ -1,63 +1,55 @@
 import { API_CONFIG } from "@/config/api";
-import { fileToBase64 } from "@/utils/fileUtils";
 import { CadastroCompleto } from "@/types/cadastro";
 import { unmask } from "@/utils/masks";
 
 export async function enviarCadastro(dados: CadastroCompleto) {
-  const { empresa, profissional, enderecoEBancario, documentos } = dados;
+  const { empresa, profissional, testemunha, documentos } = dados;
 
-  const arquivos: Record<string, any> = {};
+  const fd = new FormData();
 
-  const docMap = {
-    rg_cnh: documentos.rgCnh,
-    cpf_doc: documentos.cpfDoc,
-    crm: documentos.crm,
-    contrato_social: documentos.contratoSocial,
-    comprovante_endereco: documentos.comprovanteEndereco,
-  };
+  // Text fields
+  fd.append("nome", profissional.nomeCompleto.trim().toUpperCase());
+  fd.append("cpf", unmask(profissional.cpf));
+  fd.append("cnpj", unmask(empresa.cnpj));
+  fd.append("crm", profissional.crm.replace(/\D/g, ""));
+  fd.append("uf_crm", profissional.ufCrm.toUpperCase());
+  fd.append("email", profissional.email.trim().toLowerCase());
+  fd.append("telefone", unmask(profissional.telefone));
+  fd.append("especialidade", profissional.especialidade.trim());
+  fd.append("razao_social", empresa.razaoSocial.trim());
+  fd.append("data_nascimento", profissional.dataNascimento);
+  fd.append("endereco_cnpj", empresa.enderecoCnpj.trim());
+  fd.append("vinculo_cnpj", empresa.vinculoCnpj === "Contratado" ? "Contratado" : empresa.vinculoCnpj);
+  fd.append("nome_testemunha", testemunha.nomeTestemunha.trim());
+  fd.append("rg_testemunha", testemunha.rgTestemunha.trim());
+  fd.append("email_testemunha", testemunha.emailTestemunha.trim().toLowerCase());
 
-  for (const [key, doc] of Object.entries(docMap)) {
-    if (doc?.file) {
-      arquivos[key] = {
-        name: doc.file.name,
-        base64: await fileToBase64(doc.file),
-        type: doc.file.type,
-        size: doc.file.size,
-      };
-    }
+  // Observações — nome fantasia and any extras
+  const obs: string[] = [];
+  if (empresa.nomeFantasia?.trim()) obs.push(`Nome Fantasia: ${empresa.nomeFantasia.trim()}`);
+  fd.append("observacoes", obs.join(" | "));
+
+  // File fields
+  const fileMap: [string, File | undefined][] = [
+    ["arquivo_rg", documentos.arquivoRg?.file],
+    ["arquivo_cpf", documentos.arquivoCpf?.file],
+    ["arquivo_crm", documentos.arquivoCrm?.file],
+    ["arquivo_contrato", documentos.arquivoContrato?.file],
+    ["arquivo_dados_bancarios", documentos.arquivoDadosBancarios?.file],
+    ["arquivo_rg_testemunha", documentos.arquivoRgTestemunha?.file],
+  ];
+
+  if (empresa.vinculoCnpj === "Contratado" && documentos.arquivoDeclaracaoVinculo?.file) {
+    fileMap.push(["arquivo_declaracao_vinculo", documentos.arquivoDeclaracaoVinculo.file]);
   }
 
-  const payload = {
-    nome: profissional.nomeCompleto,
-    cpf: unmask(profissional.cpf),
-    cnpj: unmask(empresa.cnpj),
-    crm: profissional.crm,
-    uf_crm: profissional.ufCrm,
-    especialidade: profissional.especialidade,
-    data_nascimento: profissional.dataNascimento,
-    email: profissional.email,
-    telefone: unmask(profissional.telefone),
-    razao_social: empresa.razaoSocial,
-    nome_fantasia: empresa.nomeFantasia,
-    cep: unmask(enderecoEBancario.endereco.cep),
-    endereco: enderecoEBancario.endereco.logradouro,
-    numero: enderecoEBancario.endereco.numero,
-    complemento: enderecoEBancario.endereco.complemento,
-    bairro: enderecoEBancario.endereco.bairro,
-    cidade: enderecoEBancario.endereco.cidade,
-    estado: enderecoEBancario.endereco.estado,
-    banco: enderecoEBancario.bancario.banco,
-    agencia: enderecoEBancario.bancario.agencia,
-    conta: enderecoEBancario.bancario.conta,
-    tipo_conta: enderecoEBancario.bancario.tipoConta,
-    pix: enderecoEBancario.bancario.chavePix,
-    arquivos,
-  };
+  for (const [key, file] of fileMap) {
+    if (file) fd.append(key, file, file.name);
+  }
 
   const res = await fetch(API_CONFIG.WEBHOOK_CADASTRO, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: fd,
   });
 
   if (!res.ok) throw new Error(`Erro ao enviar: ${res.status}`);

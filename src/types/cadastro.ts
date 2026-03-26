@@ -2,61 +2,48 @@ export interface DadosEmpresa {
   cnpj: string;
   razaoSocial: string;
   nomeFantasia: string;
+  enderecoCnpj: string;
+  vinculoCnpj: "Sócio" | "Proprietário" | "Contratado" | "";
 }
 
 export interface DadosProfissional {
   nomeCompleto: string;
   cpf: string;
+  dataNascimento: string;
   crm: string;
   ufCrm: string;
   especialidade: string;
-  dataNascimento: string;
   email: string;
   telefone: string;
 }
 
-export interface Endereco {
-  cep: string;
-  logradouro: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-}
-
-export interface DadosBancarios {
-  banco: string;
-  agencia: string;
-  conta: string;
-  tipoConta: "corrente" | "poupanca" | "";
-  chavePix: string;
-}
-
-export interface EnderecoEBancario {
-  endereco: Endereco;
-  bancario: DadosBancarios;
+export interface DadosTestemunha {
+  nomeTestemunha: string;
+  rgTestemunha: string;
+  emailTestemunha: string;
 }
 
 export interface ArquivoUpload {
-  file: File | null;
+  file: File;
   name: string;
   size: number;
   type: string;
 }
 
 export interface Documentos {
-  rgCnh: ArquivoUpload | null;
-  cpfDoc: ArquivoUpload | null;
-  crm: ArquivoUpload | null;
-  contratoSocial: ArquivoUpload | null;
-  comprovanteEndereco: ArquivoUpload | null;
+  arquivoRg: ArquivoUpload | null;
+  arquivoCpf: ArquivoUpload | null;
+  arquivoCrm: ArquivoUpload | null;
+  arquivoContrato: ArquivoUpload | null;
+  arquivoDadosBancarios: ArquivoUpload | null;
+  arquivoRgTestemunha: ArquivoUpload | null;
+  arquivoDeclaracaoVinculo: ArquivoUpload | null;
 }
 
 export interface CadastroCompleto {
   empresa: DadosEmpresa;
   profissional: DadosProfissional;
-  enderecoEBancario: EnderecoEBancario;
+  testemunha: DadosTestemunha;
   documentos: Documentos;
 }
 

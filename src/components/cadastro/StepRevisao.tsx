@@ -28,13 +28,16 @@ function Item({ label, value }: { label: string; value: string }) {
 }
 
 export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
-  const { empresa, profissional, enderecoEBancario, documentos } = dados;
+  const { empresa, profissional, testemunha, documentos } = dados;
+
   const docItems = [
-    { label: "RG ou CNH", doc: documentos.rgCnh },
-    { label: "CPF", doc: documentos.cpfDoc },
-    { label: "CRM", doc: documentos.crm },
-    { label: "Contrato Social", doc: documentos.contratoSocial },
-    { label: "Comprovante de Endereço", doc: documentos.comprovanteEndereco },
+    { label: "RG ou CNH do Médico", doc: documentos.arquivoRg },
+    { label: "CPF do Médico", doc: documentos.arquivoCpf },
+    { label: "CRM (frente e verso)", doc: documentos.arquivoCrm },
+    { label: "Contrato Social da PJ", doc: documentos.arquivoContrato },
+    { label: "Comprovante de Dados Bancários", doc: documentos.arquivoDadosBancarios },
+    { label: "RG da Testemunha", doc: documentos.arquivoRgTestemunha },
+    ...(empresa.vinculoCnpj === "Contratado" ? [{ label: "Declaração de Vínculo", doc: documentos.arquivoDeclaracaoVinculo }] : []),
   ];
 
   return (
@@ -45,31 +48,24 @@ export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
         <Item label="CNPJ" value={empresa.cnpj} />
         <Item label="Razão Social" value={empresa.razaoSocial} />
         <Item label="Nome Fantasia" value={empresa.nomeFantasia} />
+        <Item label="Endereço do CNPJ" value={empresa.enderecoCnpj} />
+        <Item label="Vínculo" value={empresa.vinculoCnpj} />
       </Section>
 
       <Section title="Dados do Profissional">
         <Item label="Nome" value={profissional.nomeCompleto} />
         <Item label="CPF" value={profissional.cpf} />
+        <Item label="Data de Nasc." value={profissional.dataNascimento} />
         <Item label="CRM" value={`${profissional.crm} / ${profissional.ufCrm}`} />
         <Item label="Especialidade" value={profissional.especialidade} />
-        <Item label="Data de Nasc." value={profissional.dataNascimento} />
         <Item label="Email" value={profissional.email} />
         <Item label="Telefone" value={profissional.telefone} />
       </Section>
 
-      <Section title="Endereço">
-        <Item label="CEP" value={enderecoEBancario.endereco.cep} />
-        <Item label="Endereço" value={`${enderecoEBancario.endereco.logradouro}, ${enderecoEBancario.endereco.numero}`} />
-        <Item label="Bairro" value={enderecoEBancario.endereco.bairro} />
-        <Item label="Cidade/UF" value={`${enderecoEBancario.endereco.cidade} - ${enderecoEBancario.endereco.estado}`} />
-      </Section>
-
-      <Section title="Dados Bancários">
-        <Item label="Banco" value={enderecoEBancario.bancario.banco} />
-        <Item label="Agência" value={enderecoEBancario.bancario.agencia} />
-        <Item label="Conta" value={enderecoEBancario.bancario.conta} />
-        <Item label="Tipo" value={enderecoEBancario.bancario.tipoConta === "corrente" ? "Corrente" : "Poupança"} />
-        <Item label="PIX" value={enderecoEBancario.bancario.chavePix} />
+      <Section title="Dados da Testemunha">
+        <Item label="Nome" value={testemunha.nomeTestemunha} />
+        <Item label="RG" value={testemunha.rgTestemunha} />
+        <Item label="Email" value={testemunha.emailTestemunha} />
       </Section>
 
       <div>

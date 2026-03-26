@@ -32,13 +32,18 @@ export default function StepDadosProfissional({ form }: Props) {
           {errors.cpf && <p className="text-sm text-destructive mt-1">{errors.cpf.message}</p>}
         </div>
         <div>
+          <label className="text-sm font-medium text-foreground">Data de Nascimento <span className="text-destructive">*</span></label>
+          <Input type="date" {...register("dataNascimento")} />
+          {errors.dataNascimento && <p className="text-sm text-destructive mt-1">{errors.dataNascimento.message}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
           <label className="text-sm font-medium text-foreground">CRM <span className="text-destructive">*</span></label>
           <Input {...register("crm")} placeholder="Nº do CRM" maxLength={8} />
           {errors.crm && <p className="text-sm text-destructive mt-1">{errors.crm.message}</p>}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-foreground">UF do CRM <span className="text-destructive">*</span></label>
           <select {...register("ufCrm")} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -56,26 +61,20 @@ export default function StepDadosProfissional({ form }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium text-foreground">Data de Nascimento <span className="text-destructive">*</span></label>
-          <Input type="date" {...register("dataNascimento")} />
-          {errors.dataNascimento && <p className="text-sm text-destructive mt-1">{errors.dataNascimento.message}</p>}
-        </div>
-        <div>
           <label className="text-sm font-medium text-foreground">Email <span className="text-destructive">*</span></label>
           <Input type="email" {...register("email")} placeholder="medico@email.com" />
           {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
         </div>
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-foreground">Telefone/Celular <span className="text-destructive">*</span></label>
-        <Input
-          {...register("telefone")}
-          placeholder="(XX) XXXXX-XXXX"
-          value={watch("telefone")}
-          onChange={(e) => setValue("telefone", maskTelefone(e.target.value), { shouldValidate: true })}
-        />
-        {errors.telefone && <p className="text-sm text-destructive mt-1">{errors.telefone.message}</p>}
+        <div>
+          <label className="text-sm font-medium text-foreground">Telefone/Celular <span className="text-destructive">*</span></label>
+          <Input
+            {...register("telefone")}
+            placeholder="(XX) XXXXX-XXXX"
+            value={watch("telefone")}
+            onChange={(e) => setValue("telefone", maskTelefone(e.target.value), { shouldValidate: true })}
+          />
+          {errors.telefone && <p className="text-sm text-destructive mt-1">{errors.telefone.message}</p>}
+        </div>
       </div>
     </div>
   );

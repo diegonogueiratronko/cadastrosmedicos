@@ -9,15 +9,15 @@ import MinimalLayout from "@/components/layout/MinimalLayout";
 import { Button } from "@/components/ui/button";
 import StepDadosEmpresa from "@/components/cadastro/StepDadosEmpresa";
 import StepDadosProfissional from "@/components/cadastro/StepDadosProfissional";
-import StepEnderecoEBancario from "@/components/cadastro/StepEnderecoEBancario";
+import StepTestemunha from "@/components/cadastro/StepTestemunha";
 import StepDocumentos from "@/components/cadastro/StepDocumentos";
 import StepRevisao from "@/components/cadastro/StepRevisao";
 import { enviarCadastro } from "@/services/cadastroService";
 
-import { DadosEmpresa, DadosProfissional, EnderecoEBancario, Documentos } from "@/types/cadastro";
-import { dadosEmpresaSchema, dadosProfissionalSchema, enderecoEBancarioSchema } from "@/utils/validators";
+import { DadosEmpresa, DadosProfissional, DadosTestemunha, Documentos } from "@/types/cadastro";
+import { dadosEmpresaSchema, dadosProfissionalSchema, dadosTestemunhaSchema } from "@/utils/validators";
 
-const steps = ["Empresa", "Profissional", "Endereço e Banco", "Documentos", "Revisão"];
+const steps = ["Empresa", "Profissional", "Testemunha", "Documentos", "Revisão"];
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -28,38 +28,47 @@ export default function Cadastro() {
 
   const empresaForm = useForm<DadosEmpresa>({
     resolver: zodResolver(dadosEmpresaSchema),
-    defaultValues: { cnpj: "", razaoSocial: "", nomeFantasia: "" },
+    defaultValues: { cnpj: "", razaoSocial: "", nomeFantasia: "", enderecoCnpj: "", vinculoCnpj: "" },
   });
 
   const profissionalForm = useForm<DadosProfissional>({
     resolver: zodResolver(dadosProfissionalSchema),
-    defaultValues: { nomeCompleto: "", cpf: "", crm: "", ufCrm: "", especialidade: "", dataNascimento: "", email: "", telefone: "" },
+    defaultValues: { nomeCompleto: "", cpf: "", dataNascimento: "", crm: "", ufCrm: "", especialidade: "", email: "", telefone: "" },
   });
 
-  const endBancForm = useForm<EnderecoEBancario>({
-    resolver: zodResolver(enderecoEBancarioSchema),
-    defaultValues: {
-      endereco: { cep: "", logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "" },
-      bancario: { banco: "", agencia: "", conta: "", tipoConta: "", chavePix: "" },
-    },
+  const testemunhaForm = useForm<DadosTestemunha>({
+    resolver: zodResolver(dadosTestemunhaSchema),
+    defaultValues: { nomeTestemunha: "", rgTestemunha: "", emailTestemunha: "" },
   });
 
   const [documentos, setDocumentos] = useState<Documentos>({
-    rgCnh: null, cpfDoc: null, crm: null, contratoSocial: null, comprovanteEndereco: null,
+    arquivoRg: null, arquivoCpf: null, arquivoCrm: null,
+    arquivoContrato: null, arquivoDadosBancarios: null,
+    arquivoRgTestemunha: null, arquivoDeclaracaoVinculo: null,
   });
 
-  const allDocsUploaded = documentos.rgCnh && documentos.cpfDoc && documentos.crm && documentos.contratoSocial && documentos.comprovanteEndereco;
+  const vinculo = empresaForm.watch("vinculoCnpj");
+  const allDocsUploaded = documentos.arquivoRg && documentos.arquivoCpf && documentos.arquivoCrm
+    && documentos.arquivoContrato && documentos.arquivoDadosBancarios;
 
   const handleNext = async () => {
     if (step === 0) {
       const valid = await empresaForm.trigger();
       if (!valid) return;
+      if (vinculo === "Contratado" && !documentos.arquivoDeclaracaoVinculo) {
+        toast.error("A Declaração de Vínculo é obrigatória para contratados.");
+        return;
+      }
     } else if (step === 1) {
       const valid = await profissionalForm.trigger();
       if (!valid) return;
     } else if (step === 2) {
-      const valid = await endBancForm.trigger();
+      const valid = await testemunhaForm.trigger();
       if (!valid) return;
+      if (!documentos.arquivoRgTestemunha) {
+        toast.error("O documento de RG da testemunha é obrigatório.");
+        return;
+      }
     } else if (step === 3) {
       if (!allDocsUploaded) {
         toast.error("Todos os documentos são obrigatórios.");
@@ -81,7 +90,7 @@ export default function Cadastro() {
       await enviarCadastro({
         empresa: empresaForm.getValues(),
         profissional: profissionalForm.getValues(),
-        enderecoEBancario: endBancForm.getValues(),
+        testemunha: testemunhaForm.getValues(),
         documentos,
       });
       setSent(true);
@@ -134,16 +143,28 @@ export default function Cadastro() {
 
         {/* Steps */}
         <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-          {step === 0 && <StepDadosEmpresa form={empresaForm} />}
+          {step === 0 && (
+            <StepDadosEmpresa
+              form={empresaForm}
+              declaracaoVinculo={documentos.arquivoDeclaracaoVinculo}
+              onDeclaracaoChange={(f) => setDocumentos(d => ({ ...d, arquivoDeclaracaoVinculo: f }))}
+            />
+          )}
           {step === 1 && <StepDadosProfissional form={profissionalForm} />}
-          {step === 2 && <StepEnderecoEBancario form={endBancForm} />}
+          {step === 2 && (
+            <StepTestemunha
+              form={testemunhaForm}
+              rgTestemunhaFile={documentos.arquivoRgTestemunha}
+              onRgTestemunhaChange={(f) => setDocumentos(d => ({ ...d, arquivoRgTestemunha: f }))}
+            />
+          )}
           {step === 3 && <StepDocumentos documentos={documentos} onChange={setDocumentos} />}
           {step === 4 && (
             <StepRevisao
               dados={{
                 empresa: empresaForm.getValues(),
                 profissional: profissionalForm.getValues(),
-                enderecoEBancario: endBancForm.getValues(),
+                testemunha: testemunhaForm.getValues(),
                 documentos,
               }}
               aceite={aceite}

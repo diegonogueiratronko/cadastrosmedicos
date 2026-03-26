@@ -9,16 +9,18 @@ interface Props {
   onChange: (docs: Documentos) => void;
 }
 
-const docLabels: { key: keyof Documentos; label: string }[] = [
-  { key: "rgCnh", label: "RG ou CNH" },
-  { key: "cpfDoc", label: "CPF (documento)" },
-  { key: "crm", label: "CRM (frente e verso)" },
-  { key: "contratoSocial", label: "Contrato Social da PJ" },
-  { key: "comprovanteEndereco", label: "Comprovante de Endereço (últimos 90 dias)" },
+type DocKey = "arquivoRg" | "arquivoCpf" | "arquivoCrm" | "arquivoContrato" | "arquivoDadosBancarios";
+
+const docLabels: { key: DocKey; label: string }[] = [
+  { key: "arquivoRg", label: "RG ou CNH do Médico" },
+  { key: "arquivoCpf", label: "CPF do Médico (documento)" },
+  { key: "arquivoCrm", label: "CRM (frente e verso)" },
+  { key: "arquivoContrato", label: "Contrato Social da PJ" },
+  { key: "arquivoDadosBancarios", label: "Comprovante de Dados Bancários" },
 ];
 
 export default function StepDocumentos({ documentos, onChange }: Props) {
-  const handleFile = useCallback((key: keyof Documentos, file: File) => {
+  const handleFile = useCallback((key: DocKey, file: File) => {
     const error = validateFile(file);
     if (error) {
       toast.error(error);
