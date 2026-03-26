@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { LogIn, User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input";
 export default function LoginAdmin() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [erro, setErro] = useState("");
   const { loginAdmin } = useAuth();
   const navigate = useNavigate();
@@ -18,47 +18,88 @@ export default function LoginAdmin() {
     if (loginAdmin(email, senha)) {
       navigate("/admin/dashboard");
     } else {
-      setErro("Credenciais inválidas.");
+      setErro("Usuário ou senha inválidos");
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm animate-fade-in">
-        <div className="bg-card rounded-xl p-8 shadow-sm border border-border">
-          <div className="flex justify-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center">
-              <LogIn className="w-7 h-7 text-secondary" />
+    <div className="min-h-screen auth-bg flex flex-col">
+      {/* Card */}
+      <div className="flex-1 flex items-center justify-center px-6 relative z-10">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm animate-fade-in">
+          <div className="bg-card rounded-2xl p-8 shadow-2xl">
+            <h2 className="font-heading font-bold text-xl text-tertiary text-center mb-0.5">Tronko</h2>
+            <h3 className="font-heading font-bold text-lg text-card-foreground text-center mb-1">Dashboard Administrativo</h3>
+            <p className="text-xs text-muted-foreground text-center mb-6">Acesso restrito · Setor de Cadastros</p>
+
+            {erro && (
+              <div className="flex items-center gap-2 bg-destructive/10 text-destructive rounded-lg px-4 py-3 mb-4 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {erro}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-card-foreground block mb-1.5">Usuário</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Digite seu usuário"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setErro(""); }}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-card-foreground">Senha</label>
+                  <button type="button" className="text-xs text-primary hover:underline">Esqueci a senha</button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type={showPass ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={(e) => { setSenha(e.target.value); setErro(""); }}
+                    className="pl-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full mt-5 bg-primary hover:bg-primary-dark text-primary-foreground font-semibold h-12 text-base">
+              Entrar <LogIn className="w-4 h-4 ml-2" />
+            </Button>
+
+            <div className="mt-5 pt-4 border-t border-border text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">TRONKO COE · UNIMED CNU · V1.0</p>
             </div>
           </div>
-          <h2 className="font-heading font-bold text-xl text-foreground text-center mb-1">Painel Administrativo</h2>
-          <p className="text-sm text-muted-foreground text-center mb-6">Tronko — Unimed CNU</p>
 
-          <div className="space-y-3">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setErro(""); }}
-            />
-            <Input
-              type="password"
-              placeholder="Senha"
-              value={senha}
-              onChange={(e) => { setSenha(e.target.value); setErro(""); }}
-            />
+          <div className="flex items-center justify-center gap-6 mt-6 text-xs text-white/40">
+            <Link to="/" className="hover:text-white/60 transition-colors">Voltar ao início</Link>
           </div>
-          {erro && <p className="text-sm text-destructive mt-3">{erro}</p>}
-          <Button type="submit" className="w-full mt-4 bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-            Entrar
-          </Button>
-          <div className="text-center mt-4">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Voltar ao início
-            </Link>
-          </div>
-        </div>
-      </form>
+        </form>
+      </div>
+
+      {/* Footer badge */}
+      <div className="absolute bottom-6 right-6 z-10">
+        <span className="flex items-center gap-1.5 bg-secondary/80 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
+          <span className="w-2 h-2 rounded-full bg-tertiary" />
+          Unimed CNU
+        </span>
+      </div>
     </div>
   );
 }
