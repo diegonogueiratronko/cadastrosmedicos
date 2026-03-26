@@ -1,25 +1,25 @@
 import { API_CONFIG } from "@/config/api";
 import { CadastroRegistro } from "@/types/cadastro";
-import { mockCadastros, mockKPIs, mockWeeklyData, mockSpecialtyData } from "./mockData";
 
 export async function fetchCadastros(): Promise<CadastroRegistro[]> {
-  try {
-    const res = await fetch(API_CONFIG.WEBHOOK_DASHBOARD);
-    if (!res.ok) throw new Error("API error");
-    return await res.json();
-  } catch {
-    return mockCadastros;
-  }
+  const res = await fetch(API_CONFIG.WEBHOOK_DASHBOARD);
+  if (!res.ok) throw new Error("Erro ao buscar cadastros");
+  return await res.json();
 }
 
-export function getKPIs() {
-  return mockKPIs;
+export interface DashboardKPIs {
+  total: number;
+  pendentes: number;
+  aprovados: number;
+  rejeitados: number;
 }
 
-export function getWeeklyData() {
-  return mockWeeklyData;
-}
-
-export function getSpecialtyData() {
-  return mockSpecialtyData;
+export async function fetchKPIs(): Promise<DashboardKPIs> {
+  const cadastros = await fetchCadastros();
+  return {
+    total: cadastros.length,
+    pendentes: cadastros.filter(c => c.status === "PENDENTE").length,
+    aprovados: cadastros.filter(c => c.status === "OK").length,
+    rejeitados: cadastros.filter(c => c.status === "ERRO").length,
+  };
 }
