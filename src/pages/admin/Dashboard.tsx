@@ -4,8 +4,15 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros, DashboardData } from "@/services/dashboardService";
-import { mockDashboardData } from "@/services/dashboardMock";
 import { CadastroRegistro, StatusCadastro } from "@/types/cadastro";
+
+const emptyData: DashboardData = {
+  kpis: { total: 0, pendente: 0, ok: 0, inativo: 0, erro: 0 },
+  cadastros: [],
+  top_especialidades: [],
+  distribuicao_vinculo: [],
+  ultimos_cadastros: [],
+};
 
 const statusColors: Record<StatusCadastro, string> = {
   PENDENTE: "bg-warning/15 text-warning",
