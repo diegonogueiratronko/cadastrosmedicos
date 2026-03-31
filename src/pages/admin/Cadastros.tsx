@@ -4,7 +4,6 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros } from "@/services/dashboardService";
-import { mockDashboardData } from "@/services/dashboardMock";
 import { StatusCadastro, CadastroRegistro } from "@/types/cadastro";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
