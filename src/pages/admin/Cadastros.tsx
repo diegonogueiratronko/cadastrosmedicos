@@ -21,8 +21,6 @@ export default function Cadastros() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [selected, setSelected] = useState<CadastroRegistro | null>(null);
-  const [usandoMock, setUsandoMock] = useState(false);
-
   const carregar = async () => {
     setLoading(true);
     setError("");
@@ -30,11 +28,9 @@ export default function Cadastros() {
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
       setCadastros(resultado.cadastros);
-      setUsandoMock(false);
     } else {
-      setCadastros(mockDashboardData.cadastros);
-      setUsandoMock(true);
-      setError("Não foi possível carregar os dados reais. Exibindo dados de demonstração.");
+      setCadastros([]);
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
     }
 
     setLoading(false);
