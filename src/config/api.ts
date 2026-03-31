@@ -8,4 +8,7 @@ export const SENHA_MEDICO = "2026";
 
 export const ADMIN_CREDENTIALS = [
   { email: "tronko", senha: "tronko@2026", nome: "Administrador" },
+  { email: "admcontratos", senha: "contratos@2026", nome: "Adm Contratos" },
 ];
+
+export const MEDICO_PINS = ["2026", "2078"];

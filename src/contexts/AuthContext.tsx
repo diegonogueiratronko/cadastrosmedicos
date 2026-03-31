@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { ADMIN_CREDENTIALS, SENHA_MEDICO } from "@/config/api";
+import { ADMIN_CREDENTIALS, MEDICO_PINS } from "@/config/api";
 
 interface AdminUser {
   email: string;
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const authMedico = useCallback((senha: string): boolean => {
-    if (senha === SENHA_MEDICO) {
+    if (MEDICO_PINS.includes(senha)) {
       setIsMedicoAuthed(true);
       sessionStorage.setItem("medico_auth", "true");
       return true;
