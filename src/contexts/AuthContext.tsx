@@ -33,8 +33,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const loginAdmin = useCallback((email: string, senha: string): boolean => {
+    const trimEmail = email.trim().toLowerCase();
+    const trimSenha = senha.trim();
     const found = ADMIN_CREDENTIALS.find(
-      (c) => c.email === email && c.senha === senha
+      (c) => c.email.toLowerCase() === trimEmail && c.senha === trimSenha
     );
     if (found) {
       const user = { email: found.email, nome: found.nome };
