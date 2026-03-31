@@ -14,7 +14,6 @@ export default function Aprovacoes() {
   const [error, setError] = useState("");
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
-  const [usandoMock, setUsandoMock] = useState(false);
   const [processando, setProcessando] = useState<string | null>(null);
 
   const carregar = async () => {
@@ -24,11 +23,9 @@ export default function Aprovacoes() {
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
       setCadastros(resultado.cadastros.filter((c) => c.status === "PENDENTE"));
-      setUsandoMock(false);
     } else {
-      setCadastros(mockDashboardData.cadastros.filter((c) => c.status === "PENDENTE"));
-      setUsandoMock(true);
-      setError("Não foi possível carregar os dados reais. Exibindo dados de demonstração.");
+      setCadastros([]);
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
     }
 
     setLoading(false);
