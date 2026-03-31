@@ -3,7 +3,6 @@ import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros, executarAcao } from "@/services/dashboardService";
-import { mockDashboardData } from "@/services/dashboardMock";
 import { CadastroRegistro } from "@/types/cadastro";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
