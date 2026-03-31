@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { ADMIN_CREDENTIALS, SENHA_MEDICO } from "@/config/api";
+import { ADMIN_CREDENTIALS, MEDICO_PINS } from "@/config/api";
 
 interface AdminUser {
   email: string;
