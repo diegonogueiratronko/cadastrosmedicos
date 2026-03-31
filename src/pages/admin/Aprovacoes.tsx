@@ -3,7 +3,6 @@ import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros, executarAcao } from "@/services/dashboardService";
-import { mockDashboardData } from "@/services/dashboardMock";
 import { CadastroRegistro } from "@/types/cadastro";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +14,6 @@ export default function Aprovacoes() {
   const [error, setError] = useState("");
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
-  const [usandoMock, setUsandoMock] = useState(false);
   const [processando, setProcessando] = useState<string | null>(null);
 
   const carregar = async () => {
@@ -25,11 +23,9 @@ export default function Aprovacoes() {
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
       setCadastros(resultado.cadastros.filter((c) => c.status === "PENDENTE"));
-      setUsandoMock(false);
     } else {
-      setCadastros(mockDashboardData.cadastros.filter((c) => c.status === "PENDENTE"));
-      setUsandoMock(true);
-      setError("Não foi possível carregar os dados reais. Exibindo dados de demonstração.");
+      setCadastros([]);
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
     }
 
     setLoading(false);
@@ -83,12 +79,6 @@ export default function Aprovacoes() {
         )}
 
         {error && <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>}
-
-        {usandoMock && (
-          <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground border border-border">
-            Dados de demonstração
-          </div>
-        )}
 
         {!loading && !error && (
           <p className="text-sm text-muted-foreground">{cadastros.length} cadastro(s) pendente(s)</p>

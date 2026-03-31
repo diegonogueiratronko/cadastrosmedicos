@@ -4,8 +4,15 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros, DashboardData } from "@/services/dashboardService";
-import { mockDashboardData } from "@/services/dashboardMock";
 import { CadastroRegistro, StatusCadastro } from "@/types/cadastro";
+
+const emptyData: DashboardData = {
+  kpis: { total: 0, pendente: 0, ok: 0, inativo: 0, erro: 0 },
+  cadastros: [],
+  top_especialidades: [],
+  distribuicao_vinculo: [],
+  ultimos_cadastros: [],
+};
 
 const statusColors: Record<StatusCadastro, string> = {
   PENDENTE: "bg-warning/15 text-warning",
@@ -17,10 +24,9 @@ const statusColors: Record<StatusCadastro, string> = {
 const kpiBarColors = ["bg-primary", "bg-tertiary", "bg-primary", "bg-destructive"];
 
 export default function Dashboard() {
-  const [dados, setDados] = useState<DashboardData>(mockDashboardData);
+  const [dados, setDados] = useState<DashboardData>(emptyData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [usandoMock, setUsandoMock] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -28,11 +34,9 @@ export default function Dashboard() {
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
       setDados(resultado);
-      setUsandoMock(false);
     } else {
-      setDados(mockDashboardData);
-      setUsandoMock(true);
-      setError("Não foi possível carregar os dados reais. Exibindo dados de demonstração.");
+      setDados(emptyData);
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
     }
     setLoading(false);
   };
@@ -63,12 +67,6 @@ export default function Dashboard() {
             Atualizar
           </Button>
         </div>
-
-        {usandoMock && (
-          <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground border border-border">
-            Dados de demonstração
-          </div>
-        )}
 
         {error && (
           <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>
