@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const authMedico = useCallback((senha: string): boolean => {
-    if (senha === SENHA_MEDICO) {
+    if (MEDICO_PINS.includes(senha)) {
       setIsMedicoAuthed(true);
       sessionStorage.setItem("medico_auth", "true");
       return true;
