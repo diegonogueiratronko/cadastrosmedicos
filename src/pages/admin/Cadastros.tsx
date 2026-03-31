@@ -74,12 +74,6 @@ export default function Cadastros() {
           <Button variant="outline" onClick={carregar} disabled={loading}>Atualizar</Button>
         </div>
 
-        {usandoMock && (
-          <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground border border-border">
-            Dados de demonstração
-          </div>
-        )}
-
         {loading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />

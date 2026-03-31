@@ -80,12 +80,6 @@ export default function Aprovacoes() {
 
         {error && <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">{error}</div>}
 
-        {usandoMock && (
-          <div className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground border border-border">
-            Dados de demonstração
-          </div>
-        )}
-
         {!loading && !error && (
           <p className="text-sm text-muted-foreground">{cadastros.length} cadastro(s) pendente(s)</p>
         )}
