@@ -103,7 +103,19 @@ export async function buscarCadastros(): Promise<DashboardData | null> {
 
     if (!response.ok) throw new Error("Falha ao buscar dados");
 
-    const data = await response.json() as DashboardResponseN8n;
+    const text = await response.text();
+    if (!text || text.trim() === "") {
+      console.warn("Webhook retornou resposta vazia — sem cadastros ainda.");
+      return {
+        kpis: { total: 0, pendente: 0, ok: 0, inativo: 0, erro: 0 },
+        cadastros: [],
+        top_especialidades: [],
+        distribuicao_vinculo: [],
+        ultimos_cadastros: [],
+      };
+    }
+
+    const data = JSON.parse(text) as DashboardResponseN8n;
 
     return {
       kpis: {
