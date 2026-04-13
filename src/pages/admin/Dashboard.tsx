@@ -51,7 +51,7 @@ export default function Dashboard() {
   const recentCadastros = dados.ultimos_cadastros.length > 0 ? dados.ultimos_cadastros.slice(0, 5) : cadastros.slice(0, 5);
 
   const kpiCards = [
-    { label: "TOTAL DE MÉDICOS", value: kpis.total, sub: "Cadastros no sistema", icon: Users },
+    { label: "TOTAL DE PROFISSIONAIS", value: kpis.total, sub: "Cadastros no sistema", icon: Users },
     { label: "AGUARDANDO VALIDAÇÃO", value: kpis.pendente, sub: "Pendentes de análise", icon: Clock },
     { label: "APROVADOS", value: kpis.ok, sub: "Cadastros finalizados", icon: CheckCircle },
     { label: "REJEITADOS", value: kpis.erro, sub: "Requer atenção", icon: XCircle },
@@ -144,7 +144,7 @@ export default function Dashboard() {
           <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
             <div className="p-5 border-b border-border">
               <h3 className="font-heading font-semibold text-foreground">Últimos Cadastros</h3>
-              <p className="text-xs text-muted-foreground">Médicos recém submetidos ao sistema</p>
+              <p className="text-xs text-muted-foreground">Profissionais recém submetidos ao sistema</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

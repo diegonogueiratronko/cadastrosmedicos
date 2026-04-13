@@ -32,10 +32,17 @@ export default function StepDadosProfissional({ form }: Props) {
           {errors.cpf && <p className="text-sm text-destructive mt-1">{errors.cpf.message}</p>}
         </div>
         <div>
-          <label className="text-sm font-medium text-foreground">Data de Nascimento <span className="text-destructive">*</span></label>
-          <Input type="date" {...register("dataNascimento")} />
-          {errors.dataNascimento && <p className="text-sm text-destructive mt-1">{errors.dataNascimento.message}</p>}
+          <label className="text-sm font-medium text-foreground">RG <span className="text-destructive">*</span></label>
+          <Input {...register("rg")} placeholder="Digite o número do RG" />
+          <p className="text-xs text-muted-foreground mt-1 italic">Documento de Identidade (RG, CNH ou RNE)</p>
+          {errors.rg && <p className="text-sm text-destructive mt-1">{errors.rg.message}</p>}
         </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-foreground">Data de Nascimento <span className="text-destructive">*</span></label>
+        <Input type="date" {...register("dataNascimento")} />
+        {errors.dataNascimento && <p className="text-sm text-destructive mt-1">{errors.dataNascimento.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -62,7 +69,7 @@ export default function StepDadosProfissional({ form }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-foreground">Email <span className="text-destructive">*</span></label>
-          <Input type="email" {...register("email")} placeholder="medico@email.com" />
+          <Input type="email" {...register("email")} placeholder="profissional@email.com" />
           {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
         </div>
         <div>

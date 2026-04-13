@@ -30,12 +30,17 @@ export default function Cadastro() {
 
   const empresaForm = useForm<DadosEmpresa>({
     resolver: zodResolver(dadosEmpresaSchema),
-    defaultValues: { cnpj: "", razaoSocial: "", nomeFantasia: "", enderecoCnpj: "", vinculoCnpj: "" },
+    defaultValues: {
+      cnpj: "", razaoSocial: "", nomeFantasia: "", enderecoCnpj: "",
+      inscricaoMunicipal: "", inscricaoEstadual: "",
+      banco: "", agencia: "", contaCorrente: "",
+      vinculoCnpj: "",
+    },
   });
 
   const profissionalForm = useForm<DadosProfissional>({
     resolver: zodResolver(dadosProfissionalSchema),
-    defaultValues: { nomeCompleto: "", cpf: "", dataNascimento: "", crm: "", ufCrm: "", especialidade: "", email: "", telefone: "" },
+    defaultValues: { nomeCompleto: "", cpf: "", rg: "", dataNascimento: "", crm: "", ufCrm: "", especialidade: "", email: "", telefone: "" },
   });
 
   const testemunhaForm = useForm<DadosTestemunha>({
@@ -44,14 +49,36 @@ export default function Cadastro() {
   });
 
   const [documentos, setDocumentos] = useState<Documentos>({
-    arquivoRg: null, arquivoCpf: null, arquivoCrm: null,
-    arquivoContrato: null, arquivoDadosBancarios: null,
-    arquivoRgTestemunha: null, arquivoDeclaracaoVinculo: null,
+    arquivoIdentidade: null,
+    arquivoCrm: null,
+    arquivoContrato: null,
+    arquivoDadosBancarios: null,
+    arquivoRgTestemunha: null,
+    arquivoDeclaracaoVinculo: null,
+    arquivoCertificadoFormacao: null,
+    arquivoCertificadoEspecialidade: null,
+    arquivoFoto3x4: null,
+    arquivoAssinaturaCarimbo: null,
+    documentosAdicionais: Array.from({ length: 5 }, () => ({ nome: "", arquivo: null })),
   });
 
   const vinculo = empresaForm.watch("vinculoCnpj");
-  const allDocsUploaded = documentos.arquivoRg && documentos.arquivoCpf && documentos.arquivoCrm
-    && documentos.arquivoContrato && documentos.arquivoDadosBancarios;
+
+  const allRequiredDocsUploaded = documentos.arquivoIdentidade && documentos.arquivoCrm
+    && documentos.arquivoContrato && documentos.arquivoDadosBancarios
+    && documentos.arquivoCertificadoFormacao;
+
+  // Validate additional doc pairs
+  const validateAdditionalDocs = (): string | null => {
+    for (let i = 0; i < documentos.documentosAdicionais.length; i++) {
+      const { nome, arquivo } = documentos.documentosAdicionais[i];
+      const hasName = nome.trim().length > 0;
+      const hasFile = !!arquivo;
+      if (hasName && !hasFile) return `Anexe o documento referente a "${nome}"`;
+      if (hasFile && !hasName) return `Informe o nome do documento adicional ${i + 1}`;
+    }
+    return null;
+  };
 
   const handleNext = async () => {
     if (step === 0) {
@@ -72,8 +99,13 @@ export default function Cadastro() {
         return;
       }
     } else if (step === 3) {
-      if (!allDocsUploaded) {
-        toast.error("Todos os documentos são obrigatórios.");
+      if (!allRequiredDocsUploaded) {
+        toast.error("Todos os documentos obrigatórios são necessários.");
+        return;
+      }
+      const adError = validateAdditionalDocs();
+      if (adError) {
+        toast.error(adError);
         return;
       }
     }
@@ -100,9 +132,15 @@ export default function Cadastro() {
         razaoSocial: empresa.razaoSocial,
         nomeFantasia: empresa.nomeFantasia || "",
         enderecoCnpj: empresa.enderecoCnpj,
+        inscricaoMunicipal: empresa.inscricaoMunicipal,
+        inscricaoEstadual: empresa.inscricaoEstadual,
+        banco: empresa.banco,
+        agencia: empresa.agencia,
+        contaCorrente: empresa.contaCorrente,
         vinculoCnpj: empresa.vinculoCnpj,
         nomeCompleto: profissional.nomeCompleto,
         cpf: profissional.cpf,
+        rg: profissional.rg,
         dataNascimento: profissional.dataNascimento,
         crm: profissional.crm,
         ufCrm: profissional.ufCrm,
@@ -116,16 +154,27 @@ export default function Cadastro() {
       };
 
       const arquivos = {
-        arquivo_rg: documentos.arquivoRg!.file,
-        arquivo_cpf: documentos.arquivoCpf!.file,
+        arquivo_identidade: documentos.arquivoIdentidade!.file,
         arquivo_crm: documentos.arquivoCrm!.file,
         arquivo_contrato: documentos.arquivoContrato!.file,
         arquivo_dados_bancarios: documentos.arquivoDadosBancarios!.file,
         arquivo_rg_testemunha: documentos.arquivoRgTestemunha!.file,
+        arquivo_certificado_formacao: documentos.arquivoCertificadoFormacao!.file,
         arquivo_declaracao_vinculo: empresa.vinculoCnpj === "Contratado" ? documentos.arquivoDeclaracaoVinculo?.file : undefined,
+        arquivo_certificado_especialidade: documentos.arquivoCertificadoEspecialidade?.file,
+        arquivo_foto_3x4: documentos.arquivoFoto3x4?.file,
+        arquivo_assinatura_carimbo: documentos.arquivoAssinaturaCarimbo?.file,
       };
 
-      const resultado = await enviarCadastro(dados, arquivos);
+      // Collect additional doc pairs
+      const docsAdicionais: { nome: string; arquivo: File }[] = [];
+      for (const docAd of documentos.documentosAdicionais) {
+        if (docAd.nome.trim() && docAd.arquivo) {
+          docsAdicionais.push({ nome: docAd.nome.trim(), arquivo: docAd.arquivo.file });
+        }
+      }
+
+      const resultado = await enviarCadastro(dados, arquivos, docsAdicionais);
 
       if (resultado.sucesso === true) {
         setProtocolo(resultado.id_unico || "");
@@ -144,7 +193,7 @@ export default function Cadastro() {
 
   if (sent) {
     return (
-      <MinimalLayout title="Cadastro Médico PJ" showBack={false}>
+      <MinimalLayout title="Cadastro Profissional PJ" showBack={false}>
         <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)] px-6">
           <div className="text-center animate-fade-in">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
@@ -164,7 +213,7 @@ export default function Cadastro() {
 
   if (erroEnvio) {
     return (
-      <MinimalLayout title="Cadastro Médico PJ" showBack={false}>
+      <MinimalLayout title="Cadastro Profissional PJ" showBack={false}>
         <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)] px-6">
           <div className="text-center animate-fade-in max-w-md">
             <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6">
@@ -181,7 +230,7 @@ export default function Cadastro() {
   }
 
   return (
-    <MinimalLayout title="Cadastro Médico PJ">
+    <MinimalLayout title="Cadastro Profissional PJ">
       <div className="max-w-2xl mx-auto px-6 py-8">
         {/* Progress bar */}
         <div className="mb-8">

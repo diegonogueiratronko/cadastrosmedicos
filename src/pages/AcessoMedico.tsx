@@ -33,7 +33,7 @@ export default function AcessoMedico() {
         <form onSubmit={handleSubmit} className="w-full max-w-sm animate-fade-in">
           <div className="bg-card rounded-2xl p-8 shadow-2xl">
             <h2 className="font-heading font-bold text-xl text-card-foreground text-center mb-1">
-              Cadastro de Médico PJ
+              Cadastro de Profissional PJ
             </h2>
             <p className="text-sm text-muted-foreground text-center mb-6">
               Unimed CNU · Credenciamento Digital
@@ -56,7 +56,7 @@ export default function AcessoMedico() {
             </Button>
 
             <div className="mt-5 pt-4 border-t border-border text-center">
-              <p className="text-xs text-muted-foreground">Acesso exclusivo para credenciamento médico</p>
+              <p className="text-xs text-muted-foreground">Acesso exclusivo para credenciamento profissional</p>
             </div>
           </div>
         </form>
