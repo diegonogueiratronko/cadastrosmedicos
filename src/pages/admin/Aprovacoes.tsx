@@ -40,7 +40,7 @@ export default function Aprovacoes() {
     setProcessando(idUnico);
     try {
       await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
-      toast.success("Cadastro aprovado! Email enviado ao médico.");
+      toast.success("Cadastro aprovado! Email enviado ao profissional.");
       await carregar();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao aprovar cadastro");
@@ -58,7 +58,7 @@ export default function Aprovacoes() {
     setProcessando(idUnico);
     try {
       await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
-      toast.success("Cadastro rejeitado. Email enviado ao médico com o motivo.");
+      toast.success("Cadastro rejeitado. Email enviado ao profissional com o motivo.");
       setRejeitando(null);
       setMotivo("");
       await carregar();

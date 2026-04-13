@@ -30,14 +30,20 @@ function Item({ label, value }: { label: string; value: string }) {
 export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
   const { empresa, profissional, testemunha, documentos } = dados;
 
-  const docItems = [
-    { label: "RG ou CNH do Médico", doc: documentos.arquivoRg },
-    { label: "CPF do Médico", doc: documentos.arquivoCpf },
+  const requiredDocItems = [
+    { label: "RG / CPF ou CNH do Profissional", doc: documentos.arquivoIdentidade },
     { label: "CRM (frente e verso)", doc: documentos.arquivoCrm },
     { label: "Contrato Social da PJ", doc: documentos.arquivoContrato },
     { label: "Comprovante de Dados Bancários", doc: documentos.arquivoDadosBancarios },
     { label: "RG da Testemunha", doc: documentos.arquivoRgTestemunha },
+    { label: "Certificado de Formação", doc: documentos.arquivoCertificadoFormacao },
     ...(empresa.vinculoCnpj === "Contratado" ? [{ label: "Declaração de Vínculo", doc: documentos.arquivoDeclaracaoVinculo }] : []),
+  ];
+
+  const optionalDocItems = [
+    { label: "Certificado de Especialidade", doc: documentos.arquivoCertificadoEspecialidade },
+    { label: "Foto 3x4", doc: documentos.arquivoFoto3x4 },
+    { label: "Assinatura com Carimbo", doc: documentos.arquivoAssinaturaCarimbo },
   ];
 
   return (
@@ -49,12 +55,18 @@ export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
         <Item label="Razão Social" value={empresa.razaoSocial} />
         <Item label="Nome Fantasia" value={empresa.nomeFantasia} />
         <Item label="Endereço do CNPJ" value={empresa.enderecoCnpj} />
+        <Item label="Inscrição Municipal" value={empresa.inscricaoMunicipal} />
+        <Item label="Inscrição Estadual" value={empresa.inscricaoEstadual} />
+        <Item label="Banco" value={empresa.banco} />
+        <Item label="Agência" value={empresa.agencia} />
+        <Item label="Conta Corrente" value={empresa.contaCorrente} />
         <Item label="Vínculo" value={empresa.vinculoCnpj} />
       </Section>
 
       <Section title="Dados do Profissional">
         <Item label="Nome" value={profissional.nomeCompleto} />
         <Item label="CPF" value={profissional.cpf} />
+        <Item label="RG" value={profissional.rg} />
         <Item label="Data de Nasc." value={profissional.dataNascimento} />
         <Item label="CRM" value={`${profissional.crm} / ${profissional.ufCrm}`} />
         <Item label="Especialidade" value={profissional.especialidade} />
@@ -69,9 +81,9 @@ export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
       </Section>
 
       <div>
-        <h3 className="font-heading font-semibold text-sm text-foreground mb-2">Documentos</h3>
+        <h3 className="font-heading font-semibold text-sm text-foreground mb-2">Documentos Obrigatórios</h3>
         <div className="space-y-2">
-          {docItems.map(({ label, doc }) => (
+          {requiredDocItems.map(({ label, doc }) => (
             <div key={label} className="flex items-center gap-2 text-sm">
               {doc ? <Check className="w-4 h-4 text-primary" /> : <FileText className="w-4 h-4 text-muted-foreground" />}
               <span className={doc ? "text-foreground" : "text-destructive"}>{label}</span>
@@ -80,6 +92,39 @@ export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
           ))}
         </div>
       </div>
+
+      <div>
+        <h3 className="font-heading font-semibold text-sm text-foreground mb-2">Documentos Opcionais</h3>
+        <div className="space-y-2">
+          {optionalDocItems.map(({ label, doc }) => (
+            <div key={label} className="flex items-center gap-2 text-sm">
+              {doc ? <Check className="w-4 h-4 text-primary" /> : <FileText className="w-4 h-4 text-muted-foreground" />}
+              <span className="text-foreground">{label}</span>
+              {doc ? (
+                <span className="text-muted-foreground text-xs">({doc.name} — {formatFileSize(doc.size)})</span>
+              ) : (
+                <span className="text-muted-foreground text-xs">(não enviado)</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Additional docs */}
+      {documentos.documentosAdicionais.some(d => d.nome.trim() && d.arquivo) && (
+        <div>
+          <h3 className="font-heading font-semibold text-sm text-foreground mb-2">Documentos Adicionais</h3>
+          <div className="space-y-2">
+            {documentos.documentosAdicionais.filter(d => d.nome.trim() && d.arquivo).map((d, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-primary" />
+                <span className="text-foreground">{d.nome}</span>
+                <span className="text-muted-foreground text-xs">({d.arquivo!.name} — {formatFileSize(d.arquivo!.size)})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <label className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg cursor-pointer">
         <input

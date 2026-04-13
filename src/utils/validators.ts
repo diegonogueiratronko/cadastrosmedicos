@@ -5,6 +5,11 @@ export const dadosEmpresaSchema = z.object({
   razaoSocial: z.string().min(1, "Razão social é obrigatória"),
   nomeFantasia: z.string().optional().default(""),
   enderecoCnpj: z.string().min(1, "Endereço do CNPJ é obrigatório"),
+  inscricaoMunicipal: z.string().min(1, "Inscrição Municipal é obrigatória"),
+  inscricaoEstadual: z.string().min(1, "Inscrição Estadual é obrigatória"),
+  banco: z.string().min(1, "Nome do banco é obrigatório"),
+  agencia: z.string().min(1, "Agência é obrigatória"),
+  contaCorrente: z.string().min(1, "Conta corrente é obrigatória"),
   vinculoCnpj: z.enum(["Sócio", "Proprietário", "Contratado"], {
     errorMap: () => ({ message: "Selecione o vínculo com o CNPJ" }),
   }),
@@ -13,6 +18,7 @@ export const dadosEmpresaSchema = z.object({
 export const dadosProfissionalSchema = z.object({
   nomeCompleto: z.string().min(10, "Nome deve ter no mínimo 10 caracteres"),
   cpf: z.string().refine(v => v.replace(/\D/g, "").length === 11, "CPF deve ter 11 dígitos"),
+  rg: z.string().min(1, "RG é obrigatório"),
   dataNascimento: z.string().min(1, "Data de nascimento é obrigatória"),
   crm: z.string().regex(/^\d{4,8}$/, "CRM deve ter de 4 a 8 dígitos"),
   ufCrm: z.string().min(2, "Selecione a UF do CRM"),

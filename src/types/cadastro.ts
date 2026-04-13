@@ -3,12 +3,18 @@ export interface DadosEmpresa {
   razaoSocial: string;
   nomeFantasia: string;
   enderecoCnpj: string;
+  inscricaoMunicipal: string;
+  inscricaoEstadual: string;
+  banco: string;
+  agencia: string;
+  contaCorrente: string;
   vinculoCnpj: "Sócio" | "Proprietário" | "Contratado" | "";
 }
 
 export interface DadosProfissional {
   nomeCompleto: string;
   cpf: string;
+  rg: string;
   dataNascimento: string;
   crm: string;
   ufCrm: string;
@@ -30,14 +36,23 @@ export interface ArquivoUpload {
   type: string;
 }
 
+export interface DocumentoAdicional {
+  nome: string;
+  arquivo: ArquivoUpload | null;
+}
+
 export interface Documentos {
-  arquivoRg: ArquivoUpload | null;
-  arquivoCpf: ArquivoUpload | null;
+  arquivoIdentidade: ArquivoUpload | null;
   arquivoCrm: ArquivoUpload | null;
   arquivoContrato: ArquivoUpload | null;
   arquivoDadosBancarios: ArquivoUpload | null;
   arquivoRgTestemunha: ArquivoUpload | null;
   arquivoDeclaracaoVinculo: ArquivoUpload | null;
+  arquivoCertificadoFormacao: ArquivoUpload | null;
+  arquivoCertificadoEspecialidade: ArquivoUpload | null;
+  arquivoFoto3x4: ArquivoUpload | null;
+  arquivoAssinaturaCarimbo: ArquivoUpload | null;
+  documentosAdicionais: DocumentoAdicional[];
 }
 
 export interface CadastroCompleto {

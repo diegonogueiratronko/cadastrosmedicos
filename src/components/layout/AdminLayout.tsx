@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <span className="text-sidebar-primary-foreground font-heading font-bold text-sm">T</span>
           </div>
           <div>
-            <span className="font-heading font-bold text-tertiary">Cadastros Médicos</span>
+            <span className="font-heading font-bold text-tertiary">Cadastros Profissionais</span>
             <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-wider">Tronko - Inovação</p>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Footer */}
         <footer className="py-3 px-6 flex items-center justify-between text-xs text-muted-foreground border-t border-border">
-          <span><span className="text-primary font-medium">Cadastros Médicos</span> | © 2026 Tronko - Inovação</span>
+          <span><span className="text-primary font-medium">Cadastros Profissionais</span> | © 2026 Tronko - Inovação</span>
           <div className="flex items-center gap-4">
             <span className="hover:text-foreground cursor-pointer transition-colors">Privacidade</span>
             <span className="hover:text-foreground cursor-pointer transition-colors">Termos</span>

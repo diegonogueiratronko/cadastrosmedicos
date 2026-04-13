@@ -22,14 +22,14 @@ export default function Index() {
             <FileText className="w-8 h-8 text-primary" />
           </div>
           <h1 className="font-heading font-extrabold text-3xl md:text-4xl text-white mb-3">
-            Portal de Cadastro Médico PJ
+            Portal de Cadastro Profissional PJ
           </h1>
           <p className="text-white/60 text-lg mb-12">
             Sistema automatizado de credenciamento — Unimed CNU
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-lg mx-auto">
-            {/* Card Médico */}
+            {/* Card Profissional */}
             <Link
               to="/acesso-medico"
               className="group bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 text-left"
@@ -37,7 +37,7 @@ export default function Index() {
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                 <Stethoscope className="w-6 h-6 text-primary" />
               </div>
-              <h2 className="font-heading font-bold text-card-foreground mb-1">Sou Médico</h2>
+              <h2 className="font-heading font-bold text-card-foreground mb-1">Sou Profissional</h2>
               <p className="text-sm text-muted-foreground">Realizar meu cadastro</p>
             </Link>
 
@@ -58,7 +58,7 @@ export default function Index() {
 
       {/* Footer */}
       <footer className="py-4 text-center text-xs text-white/40 relative z-10">
-        Tronko Innovation Office © 2026 — Cadastros Médicos
+        Tronko Innovation Office © 2026 — Cadastros Profissionais
       </footer>
     </div>
   );

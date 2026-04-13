@@ -60,6 +60,46 @@ export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracao
         {errors.enderecoCnpj && <p className="text-sm text-destructive mt-1">{errors.enderecoCnpj.message}</p>}
       </div>
 
+      {/* Inscrição Municipal */}
+      <div>
+        <label className="text-sm font-medium text-foreground">Inscrição Municipal <span className="text-destructive">*</span></label>
+        <Input {...register("inscricaoMunicipal")} placeholder='Digite o número ou "ISENTO"' />
+        <p className="text-xs text-muted-foreground mt-1 italic">Caso não possua, informe ISENTO</p>
+        {errors.inscricaoMunicipal && <p className="text-sm text-destructive mt-1">{errors.inscricaoMunicipal.message}</p>}
+      </div>
+
+      {/* Inscrição Estadual */}
+      <div>
+        <label className="text-sm font-medium text-foreground">Inscrição Estadual <span className="text-destructive">*</span></label>
+        <Input {...register("inscricaoEstadual")} placeholder='Digite o número ou "ISENTO"' />
+        <p className="text-xs text-muted-foreground mt-1 italic">Caso não possua, informe ISENTO</p>
+        {errors.inscricaoEstadual && <p className="text-sm text-destructive mt-1">{errors.inscricaoEstadual.message}</p>}
+      </div>
+
+      {/* Dados Bancários da Empresa */}
+      <div className="pt-2">
+        <h3 className="font-heading font-semibold text-sm text-foreground mb-3">Dados Bancários da Empresa</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-foreground">Nome do Banco <span className="text-destructive">*</span></label>
+            <Input {...register("banco")} placeholder="Ex: Bradesco, Itaú, Caixa Econômica Federal..." />
+            {errors.banco && <p className="text-sm text-destructive mt-1">{errors.banco.message}</p>}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">Agência <span className="text-destructive">*</span></label>
+              <Input {...register("agencia")} placeholder="Ex: 1234-5" />
+              {errors.agencia && <p className="text-sm text-destructive mt-1">{errors.agencia.message}</p>}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground">Conta Corrente <span className="text-destructive">*</span></label>
+              <Input {...register("contaCorrente")} placeholder="Ex: 98765-0" />
+              {errors.contaCorrente && <p className="text-sm text-destructive mt-1">{errors.contaCorrente.message}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label className="text-sm font-medium text-foreground">Vínculo com o CNPJ <span className="text-destructive">*</span></label>
         <select
