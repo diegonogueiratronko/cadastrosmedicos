@@ -45,10 +45,6 @@ export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracao
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-foreground">Nome Fantasia</label>
-        <Input {...register("nomeFantasia")} placeholder="Nome fantasia (opcional)" />
-      </div>
 
       <div>
         <label className="text-sm font-medium text-foreground">Endereço do CNPJ <span className="text-destructive">*</span></label>
