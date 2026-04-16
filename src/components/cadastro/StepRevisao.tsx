@@ -53,7 +53,7 @@ export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
       <Section title="Dados da Empresa">
         <Item label="CNPJ" value={empresa.cnpj} />
         <Item label="Razão Social" value={empresa.razaoSocial} />
-        <Item label="Nome Fantasia" value={empresa.nomeFantasia} />
+        
         <Item label="Endereço do CNPJ" value={empresa.enderecoCnpj} />
         <Item label="Inscrição Municipal" value={empresa.inscricaoMunicipal} />
         <Item label="Inscrição Estadual" value={empresa.inscricaoEstadual} />
