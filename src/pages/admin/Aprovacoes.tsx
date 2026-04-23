@@ -39,11 +39,15 @@ export default function Aprovacoes() {
     if (processando) return;
     setProcessando(idUnico);
     try {
-      await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
-      toast.success("Cadastro aprovado! Email enviado ao profissional.");
+      const resultado = await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
+      if (resultado && resultado.sucesso === false) {
+        toast.error(resultado.mensagem || resultado.erro || "Erro ao aprovar cadastro", { duration: 4000 });
+        return;
+      }
+      toast.success("Cadastro aprovado com sucesso!", { duration: 4000 });
       await carregar();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao aprovar cadastro");
+      toast.error(error instanceof Error ? error.message : "Erro de conexão. Tente novamente.", { duration: 4000 });
     } finally {
       setProcessando(null);
     }
@@ -57,13 +61,17 @@ export default function Aprovacoes() {
     if (processando) return;
     setProcessando(idUnico);
     try {
-      await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
-      toast.success("Cadastro rejeitado. Email enviado ao profissional com o motivo.");
+      const resultado = await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
+      if (resultado && resultado.sucesso === false) {
+        toast.error(resultado.mensagem || resultado.erro || "Erro ao rejeitar cadastro", { duration: 4000 });
+        return;
+      }
+      toast.success("Cadastro rejeitado com sucesso!", { duration: 4000 });
       setRejeitando(null);
       setMotivo("");
       await carregar();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao rejeitar cadastro");
+      toast.error(error instanceof Error ? error.message : "Erro de conexão. Tente novamente.", { duration: 4000 });
     } finally {
       setProcessando(null);
     }
