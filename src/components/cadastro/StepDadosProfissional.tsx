@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-import { DadosProfissional, UFS_BRASIL } from "@/types/cadastro";
+import { DadosProfissional, UFS_BRASIL, ESPECIALIDADES } from "@/types/cadastro";
 import { Input } from "@/components/ui/input";
 import { maskCPF, maskTelefone } from "@/utils/masks";
 
