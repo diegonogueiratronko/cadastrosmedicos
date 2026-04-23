@@ -93,22 +93,20 @@ export default function StepRevisao({ dados, aceite, onAceiteChange }: Props) {
         </div>
       </div>
 
-      <div>
-        <h3 className="font-heading font-semibold text-sm text-foreground mb-2">Documentos Opcionais</h3>
-        <div className="space-y-2">
-          {optionalDocItems.map(({ label, doc }) => (
-            <div key={label} className="flex items-center gap-2 text-sm">
-              {doc ? <Check className="w-4 h-4 text-primary" /> : <FileText className="w-4 h-4 text-muted-foreground" />}
-              <span className="text-foreground">{label}</span>
-              {doc ? (
-                <span className="text-muted-foreground text-xs">({doc.name} — {formatFileSize(doc.size)})</span>
-              ) : (
-                <span className="text-muted-foreground text-xs">(não enviado)</span>
-              )}
-            </div>
-          ))}
+      {optionalDocItems.some(({ doc }) => doc) && (
+        <div>
+          <h3 className="font-heading font-semibold text-sm text-foreground mb-2">Documentos Opcionais Enviados</h3>
+          <div className="space-y-2">
+            {optionalDocItems.filter(({ doc }) => doc).map(({ label, doc }) => (
+              <div key={label} className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-primary" />
+                <span className="text-foreground">{label}</span>
+                <span className="text-muted-foreground text-xs">({doc!.name} — {formatFileSize(doc!.size)})</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Additional docs */}
       {documentos.documentosAdicionais.some(d => d.nome.trim() && d.arquivo) && (
