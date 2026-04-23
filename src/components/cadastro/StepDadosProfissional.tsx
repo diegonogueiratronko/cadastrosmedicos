@@ -61,7 +61,15 @@ export default function StepDadosProfissional({ form }: Props) {
         </div>
         <div>
           <label className="text-sm font-medium text-foreground">Especialidade <span className="text-destructive">*</span></label>
-          <Input {...register("especialidade")} placeholder="Ex: Cardiologia" />
+          <select
+            {...register("especialidade")}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="">Selecione a especialidade</option>
+            {ESPECIALIDADES.map((esp) => (
+              <option key={esp} value={esp}>{esp}</option>
+            ))}
+          </select>
           {errors.especialidade && <p className="text-sm text-destructive mt-1">{errors.especialidade.message}</p>}
         </div>
       </div>
