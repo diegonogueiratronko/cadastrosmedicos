@@ -35,6 +35,24 @@ export default function Aprovacoes() {
     carregar();
   }, []);
 
+  const recarregarComRetry = async (idUnico: string, statusEsperado: "OK" | "ERRO") => {
+    // Tenta até 4x (0s, 1.2s, 2.5s, 4s) até a planilha refletir o novo status
+    const delays = [0, 1200, 1300, 1500];
+    for (const delay of delays) {
+      if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+      const resultado = await buscarCadastros();
+      if (!resultado) continue;
+      const item = resultado.cadastros.find((c) => c.idUnico === idUnico);
+      // Sucesso: o item saiu de PENDENTE (ou nem aparece mais)
+      if (!item || item.status !== "PENDENTE") {
+        setCadastros(resultado.cadastros.filter((c) => c.status === "PENDENTE"));
+        return;
+      }
+    }
+    // Última tentativa: ainda assim atualiza a UI removendo localmente o item
+    setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
+  };
+
   const aprovar = async (idUnico: string) => {
     if (processando) return;
     setProcessando(idUnico);
@@ -44,8 +62,11 @@ export default function Aprovacoes() {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao aprovar cadastro", { duration: 4000 });
         return;
       }
+      // Atualização otimista — remove o card imediatamente
+      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
       toast.success("Cadastro aprovado com sucesso!", { duration: 4000 });
-      await carregar();
+      // Refetch em background com retry para confirmar com o backend
+      recarregarComRetry(idUnico, "OK");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro de conexão. Tente novamente.", { duration: 4000 });
     } finally {
@@ -66,10 +87,13 @@ export default function Aprovacoes() {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao rejeitar cadastro", { duration: 4000 });
         return;
       }
+      // Atualização otimista — remove o card imediatamente
+      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
       toast.success("Cadastro rejeitado com sucesso!", { duration: 4000 });
       setRejeitando(null);
       setMotivo("");
-      await carregar();
+      // Refetch em background com retry para confirmar com o backend
+      recarregarComRetry(idUnico, "ERRO");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro de conexão. Tente novamente.", { duration: 4000 });
     } finally {
