@@ -96,9 +96,15 @@ function normalizarCadastro(item: CadastroN8n): CadastroRegistro {
 
 export async function buscarCadastros(): Promise<DashboardData | null> {
   try {
-    const response = await fetch(API_CONFIG.WEBHOOK_DASHBOARD, {
+    const url = `${API_CONFIG.WEBHOOK_DASHBOARD}?t=${Date.now()}`;
+    const response = await fetch(url, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+      },
     });
 
     if (!response.ok) throw new Error("Falha ao buscar dados");
