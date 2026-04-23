@@ -95,8 +95,8 @@ export default function Aprovacoes() {
         {!loading && cadastros.length === 0 && !error && (
           <div className="bg-card rounded-xl p-12 text-center border border-border">
             <CheckCircle className="w-10 h-10 text-primary mx-auto mb-3" />
-            <p className="font-heading font-semibold text-foreground">Nenhum cadastro pendente</p>
-            <p className="text-sm text-muted-foreground mt-1">Os dados serão carregados via integração n8n.</p>
+            <p className="font-heading font-semibold text-foreground">🎉 Nenhum cadastro pendente no momento</p>
+            <p className="text-sm text-muted-foreground mt-1">Todos os cadastros foram processados.</p>
           </div>
         )}
 
