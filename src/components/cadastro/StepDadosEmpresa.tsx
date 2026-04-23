@@ -114,7 +114,7 @@ export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracao
         <div className={`rounded-lg border-2 border-dashed p-4 transition-colors ${
           declaracaoVinculo ? "border-primary/40 bg-primary/5" : "border-border"
         }`}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
               {declaracaoVinculo ? (
                 <Check className="w-5 h-5 text-primary" />
@@ -128,7 +128,7 @@ export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracao
                 )}
               </div>
             </div>
-            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-muted hover:bg-muted/80 text-foreground transition-colors">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-muted hover:bg-muted/80 text-foreground transition-colors shrink-0">
               <Upload className="w-3.5 h-3.5" />
               {declaracaoVinculo ? "Trocar" : "Enviar"}
               <input
@@ -141,6 +141,13 @@ export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracao
                 }}
               />
             </label>
+          </div>
+
+          <div className="flex gap-3 rounded-md bg-accent/15 border-l-4 border-accent p-3">
+            <Info className="w-4 h-4 text-accent-foreground/80 shrink-0 mt-0.5" />
+            <p className="text-xs leading-relaxed text-foreground/80">
+              O documento deve constar com a logomarca da empresa e/ou papel timbrado, conter Razão Social, CNPJ da empresa citada, Nome completo do profissional, CPF e CRM do estado de atuação da contratação, e deve ser assinado pelo sócio majoritário ou sócio-administrador.
+            </p>
           </div>
         </div>
       )}
