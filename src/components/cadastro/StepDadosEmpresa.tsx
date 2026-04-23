@@ -3,7 +3,7 @@ import { DadosEmpresa, ArquivoUpload } from "@/types/cadastro";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { maskCNPJ } from "@/utils/masks";
-import { Upload, Check, FileText } from "lucide-react";
+import { Upload, Check, FileText, Info } from "lucide-react";
 import { validateFile, formatFileSize } from "@/utils/fileUtils";
 import { toast } from "sonner";
 
