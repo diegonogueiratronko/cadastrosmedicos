@@ -52,7 +52,9 @@ export const dadosEmpresaSchema = z.object({
 
 export const dadosProfissionalSchema = z.object({
   nomeCompleto: z.string().min(10, "Nome deve ter no mínimo 10 caracteres"),
-  cpf: z.string().refine(v => v.replace(/\D/g, "").length === 11, "CPF deve ter 11 dígitos"),
+  cpf: z.string()
+    .refine(v => v.replace(/\D/g, "").length === 11, "CPF deve ter 11 dígitos")
+    .refine(isValidCPF, "CPF inválido"),
   rg: z.string().min(1, "RG é obrigatório"),
   dataNascimento: z.string().min(1, "Data de nascimento é obrigatória"),
   crm: z.string().regex(/^\d{4,8}$/, "CRM deve ter de 4 a 8 dígitos"),
