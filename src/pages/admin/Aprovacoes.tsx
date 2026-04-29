@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,9 @@ export default function Aprovacoes() {
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [processando, setProcessando] = useState<string | null>(null);
+  // IDs já aprovados/rejeitados nesta sessão — nunca devem voltar à tela,
+  // mesmo que o webhook ainda devolva dados desatualizados (Sheets demora a propagar).
+  const processadosRef = useRef<Set<string>>(new Set());
 
   const carregar = async () => {
     setLoading(true);
@@ -22,7 +25,11 @@ export default function Aprovacoes() {
 
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
-      setCadastros(resultado.cadastros.filter((c) => c.status === "PENDENTE"));
+      setCadastros(
+        resultado.cadastros.filter(
+          (c) => c.status === "PENDENTE" && !processadosRef.current.has(c.idUnico)
+        )
+      );
     } else {
       setCadastros([]);
       setError("Não foi possível conectar ao servidor. Tente novamente.");
@@ -36,20 +43,26 @@ export default function Aprovacoes() {
   }, []);
 
   const recarregarComRetry = async (idUnico: string, statusEsperado: "OK" | "ERRO") => {
-    // Tenta até 4x (0s, 1.2s, 2.5s, 4s) até a planilha refletir o novo status
-    const delays = [0, 1200, 1300, 1500];
+    // Espera o backend (Google Sheets) propagar antes do primeiro fetch.
+    // Sem delay=0: aquele primeiro tick devolvia o item ainda como PENDENTE
+    // e sobrescrevia a remoção otimista, fazendo o card "voltar" para a tela.
+    const delays = [1500, 2500, 4000, 5000];
     for (const delay of delays) {
-      if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+      await new Promise((r) => setTimeout(r, delay));
       const resultado = await buscarCadastros();
       if (!resultado) continue;
       const item = resultado.cadastros.find((c) => c.idUnico === idUnico);
-      // Sucesso: o item saiu de PENDENTE (ou nem aparece mais)
-      if (!item || item.status !== "PENDENTE") {
-        setCadastros(resultado.cadastros.filter((c) => c.status === "PENDENTE"));
+      // Confirmado quando o item sumiu OU já reflete o status esperado
+      if (!item || item.status === statusEsperado || item.status !== "PENDENTE") {
+        setCadastros(
+          resultado.cadastros.filter(
+            (c) => c.status === "PENDENTE" && !processadosRef.current.has(c.idUnico)
+          )
+        );
         return;
       }
     }
-    // Última tentativa: ainda assim atualiza a UI removendo localmente o item
+    // Backend ainda não propagou — mantém a remoção otimista local
     setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
   };
 
@@ -62,6 +75,8 @@ export default function Aprovacoes() {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao aprovar cadastro", { duration: 4000 });
         return;
       }
+      // Marca como processado para nunca mais voltar à tela
+      processadosRef.current.add(idUnico);
       // Atualização otimista — remove o card imediatamente
       setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
       toast.success("Cadastro aprovado com sucesso!", { duration: 4000 });
@@ -87,6 +102,8 @@ export default function Aprovacoes() {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao rejeitar cadastro", { duration: 4000 });
         return;
       }
+      // Marca como processado para nunca mais voltar à tela
+      processadosRef.current.add(idUnico);
       // Atualização otimista — remove o card imediatamente
       setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
       toast.success("Cadastro rejeitado com sucesso!", { duration: 4000 });
