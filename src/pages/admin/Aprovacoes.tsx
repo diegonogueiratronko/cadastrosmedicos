@@ -7,6 +7,25 @@ import { CadastroRegistro } from "@/types/cadastro";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
+function filtrarPendentesVisiveis(cadastros: CadastroRegistro[], processados: Set<string>) {
+  const idsComStatusFinal = new Set(
+    cadastros.filter((c) => c.status !== "PENDENTE").map((c) => c.idUnico)
+  );
+
+  const pendentesUnicos = new Map<string, CadastroRegistro>();
+
+  for (const cadastro of cadastros) {
+    if (cadastro.status !== "PENDENTE") continue;
+    if (processados.has(cadastro.idUnico)) continue;
+    if (idsComStatusFinal.has(cadastro.idUnico)) continue;
+    if (!pendentesUnicos.has(cadastro.idUnico)) {
+      pendentesUnicos.set(cadastro.idUnico, cadastro);
+    }
+  }
+
+  return Array.from(pendentesUnicos.values());
+}
+
 export default function Aprovacoes() {
   const { adminUser } = useAuth();
   const [cadastros, setCadastros] = useState<CadastroRegistro[]>([]);
@@ -25,11 +44,7 @@ export default function Aprovacoes() {
 
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
-      setCadastros(
-        resultado.cadastros.filter(
-          (c) => c.status === "PENDENTE" && !processadosRef.current.has(c.idUnico)
-        )
-      );
+      setCadastros(filtrarPendentesVisiveis(resultado.cadastros, processadosRef.current));
     } else {
       setCadastros([]);
       setError("Não foi possível conectar ao servidor. Tente novamente.");
@@ -54,11 +69,7 @@ export default function Aprovacoes() {
       const item = resultado.cadastros.find((c) => c.idUnico === idUnico);
       // Confirmado quando o item sumiu OU já reflete o status esperado
       if (!item || item.status === statusEsperado || item.status !== "PENDENTE") {
-        setCadastros(
-          resultado.cadastros.filter(
-            (c) => c.status === "PENDENTE" && !processadosRef.current.has(c.idUnico)
-          )
-        );
+        setCadastros(filtrarPendentesVisiveis(resultado.cadastros, processadosRef.current));
         return;
       }
     }
