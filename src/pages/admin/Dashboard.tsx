@@ -190,7 +190,7 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{c.especialidade}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.dataCadastro}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatarData(c.dataCadastro)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[c.status]}`}>
                           {c.status === "OK" ? "APROVADO" : c.status}
