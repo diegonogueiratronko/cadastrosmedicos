@@ -1,56 +1,50 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { ADMIN_CREDENTIALS, MEDICO_PINS } from "@/config/api";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { MEDICO_PINS } from "@/config/api";
 
-interface AdminUser {
-  email: string;
-  nome: string;
+export interface UserProfile {
+  id: string;
+  nome_completo: string;
+  cargo: string | null;
+  role: "admin" | "analista";
+  ativo: boolean;
 }
 
 interface AuthContextType {
-  adminUser: AdminUser | null;
+  // Supabase admin auth
+  user: User | null;
+  session: Session | null;
+  profile: UserProfile | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
+  // Legacy medico PIN auth (formulário público)
   isMedicoAuthed: boolean;
-  loginAdmin: (email: string, senha: string) => boolean;
-  logoutAdmin: () => void;
   authMedico: (senha: string) => boolean;
+  // Compat aliases used by existing admin pages
+  adminUser: { email: string; nome: string } | null;
+  logoutAdmin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error("useAuth deve ser usado dentro de AuthProvider");
   return ctx;
 };
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
-    const stored = sessionStorage.getItem("admin_user");
-    return stored ? JSON.parse(stored) : null;
-  });
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // Legacy medico PIN
   const [isMedicoAuthed, setIsMedicoAuthed] = useState(() => {
     return sessionStorage.getItem("medico_auth") === "true";
   });
-
-  const loginAdmin = useCallback((email: string, senha: string): boolean => {
-    const trimEmail = email.trim().toLowerCase();
-    const trimSenha = senha.trim();
-    const found = ADMIN_CREDENTIALS.find(
-      (c) => c.email.toLowerCase() === trimEmail && c.senha === trimSenha
-    );
-    if (found) {
-      const user = { email: found.email, nome: found.nome };
-      setAdminUser(user);
-      sessionStorage.setItem("admin_user", JSON.stringify(user));
-      return true;
-    }
-    return false;
-  }, []);
-
-  const logoutAdmin = useCallback(() => {
-    setAdminUser(null);
-    sessionStorage.removeItem("admin_user");
-  }, []);
 
   const authMedico = useCallback((senha: string): boolean => {
     if (MEDICO_PINS.includes(senha)) {
@@ -61,9 +55,98 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   }, []);
 
+  async function loadProfile(userId: string) {
+    const { data, error } = await supabase
+      .schema("udc")
+      .from("user_profiles")
+      .select("id, nome_completo, cargo, role, ativo")
+      .eq("id", userId)
+      .single();
+
+    if (error || !data) {
+      console.error("Erro ao carregar perfil:", error);
+      setProfile(null);
+      return;
+    }
+
+    if (!data.ativo) {
+      await supabase.auth.signOut();
+      setProfile(null);
+      return;
+    }
+
+    setProfile(data as UserProfile);
+  }
+
+  useEffect(() => {
+    // Set up listener BEFORE getSession
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function signIn(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      const msg =
+        error.message === "Invalid login credentials"
+          ? "Email ou senha incorretos"
+          : "Erro ao fazer login. Tente novamente.";
+      return { error: msg };
+    }
+    return { error: null };
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setProfile(null);
+  }
+
+  // Compat aliases for existing admin components
+  const adminUser = profile
+    ? { email: user?.email || "", nome: profile.nome_completo }
+    : null;
+
+  const logoutAdmin = () => {
+    signOut();
+  };
+
   return (
-    <AuthContext.Provider value={{ adminUser, isMedicoAuthed, loginAdmin, logoutAdmin, authMedico }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        loading,
+        signIn,
+        signOut,
+        isMedicoAuthed,
+        authMedico,
+        adminUser,
+        logoutAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
+}
