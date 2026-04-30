@@ -174,7 +174,7 @@ export default function Dashboard() {
                   <tr className="bg-muted/50">
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Nome</th>
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Especialidade</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Data</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Data Cadastro</th>
                     <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase">Status</th>
                   </tr>
                 </thead>
