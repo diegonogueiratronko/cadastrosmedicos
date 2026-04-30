@@ -27,7 +27,7 @@ function filtrarPendentesVisiveis(cadastros: CadastroRegistro[], processados: Se
 }
 
 export default function Aprovacoes() {
-  const { adminUser } = useAuth();
+  const { profile, user } = useAuth();
   const [cadastros, setCadastros] = useState<CadastroRegistro[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -81,7 +81,7 @@ export default function Aprovacoes() {
     if (processando) return;
     setProcessando(idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "OK", "", adminUser?.email || "admin@unimed.com");
+      const resultado = await executarAcao(idUnico, "OK", "", profile?.nome_completo || user?.email || "admin");
       if (resultado && resultado.sucesso === false) {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao aprovar cadastro", { duration: 4000 });
         return;
@@ -108,7 +108,7 @@ export default function Aprovacoes() {
     if (processando) return;
     setProcessando(idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "ERRO", motivo, adminUser?.email || "admin@unimed.com");
+      const resultado = await executarAcao(idUnico, "ERRO", motivo, profile?.nome_completo || user?.email || "admin");
       if (resultado && resultado.sucesso === false) {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao rejeitar cadastro", { duration: 4000 });
         return;

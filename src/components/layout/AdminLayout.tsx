@@ -26,13 +26,15 @@ const pageTitles: Record<string, string> = {
 };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { adminUser, logoutAdmin } = useAuth();
+  const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    logoutAdmin();
-    navigate("/");
+  const handleLogout = async () => {
+    if (confirm("Deseja realmente sair?")) {
+      await signOut();
+      navigate("/login-admin", { replace: true });
+    }
   };
 
   const pageTitle = pageTitles[location.pathname] || "Admin";
@@ -78,8 +80,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <User className="w-4 h-4 text-sidebar-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{adminUser?.nome}</p>
-              <span className="text-[10px] text-sidebar-foreground/50">Administrador</span>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{profile?.nome_completo}</p>
+              <span className="text-[10px] text-sidebar-foreground/50">{profile?.role === "admin" ? "Administrador" : "Analista"}</span>
             </div>
           </div>
         </div>
