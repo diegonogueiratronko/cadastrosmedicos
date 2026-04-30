@@ -48,7 +48,29 @@ export default function Dashboard() {
 
   const specialtyChartData = dados.top_especialidades.map((item) => ({ name: item.nome, value: item.total }));
 
-  const recentCadastros = dados.ultimos_cadastros.length > 0 ? dados.ultimos_cadastros.slice(0, 5) : cadastros.slice(0, 5);
+  // Deduplica por idUnico, priorizando status final (OK/ERRO) sobre PENDENTE
+  const dedupCadastros = (lista: CadastroRegistro[]) => {
+    const mapa = new Map<string, CadastroRegistro>();
+    for (const c of lista) {
+      const existente = mapa.get(c.idUnico);
+      if (!existente || (existente.status === "PENDENTE" && c.status !== "PENDENTE")) {
+        mapa.set(c.idUnico, c);
+      }
+    }
+    return Array.from(mapa.values());
+  };
+
+  const rawRecent = dados.ultimos_cadastros.length > 0 ? dados.ultimos_cadastros.slice(0, 5) : cadastros.slice(0, 5);
+  const recentCadastros = dedupCadastros(rawRecent);
+
+  const formatarData = (data: string) => {
+    try {
+      const d = new Date(data);
+      if (isNaN(d.getTime())) return data;
+      return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+        " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    } catch { return data; }
+  };
 
   const kpiCards = [
     { label: "TOTAL DE PROFISSIONAIS", value: kpis.total, sub: "Cadastros no sistema", icon: Users },
@@ -168,7 +190,7 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{c.especialidade}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.dataCadastro}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatarData(c.dataCadastro)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[c.status]}`}>
                           {c.status === "OK" ? "APROVADO" : c.status}
