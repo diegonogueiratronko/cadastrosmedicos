@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { LogIn, User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,21 +10,30 @@ export default function LoginAdmin() {
   const [senha, setSenha] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [erro, setErro] = useState("");
-  const { loginAdmin } = useAuth();
+  const [carregando, setCarregando] = useState(false);
+  const [mostrarMsgEsqueci, setMostrarMsgEsqueci] = useState(false);
+  const { signIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/admin/dashboard";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginAdmin(email, senha)) {
-      navigate("/admin/dashboard");
+    setErro("");
+    setCarregando(true);
+
+    const { error } = await signIn(email, senha);
+    setCarregando(false);
+
+    if (error) {
+      setErro(error);
     } else {
-      setErro("Usuário ou senha inválidos");
+      navigate(from, { replace: true });
     }
   };
 
   return (
     <div className="min-h-screen auth-bg flex flex-col">
-      {/* Card */}
       <div className="flex-1 flex items-center justify-center px-6 relative z-10">
         <form onSubmit={handleSubmit} className="w-full max-w-sm animate-fade-in">
           <div className="bg-card rounded-2xl p-8 shadow-2xl">
@@ -41,22 +50,31 @@ export default function LoginAdmin() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-card-foreground block mb-1.5">Usuário</label>
+                <label className="text-sm font-medium text-card-foreground block mb-1.5">Email</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    type="text"
-                    placeholder="Digite seu usuário"
+                    type="email"
+                    placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErro(""); }}
                     className="pl-10"
+                    autoComplete="email"
+                    autoFocus
+                    required
                   />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-sm font-medium text-card-foreground">Senha</label>
-                  <button type="button" className="text-xs text-primary hover:underline">Esqueci a senha</button>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => setMostrarMsgEsqueci(true)}
+                  >
+                    Esqueci a senha
+                  </button>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -66,6 +84,8 @@ export default function LoginAdmin() {
                     value={senha}
                     onChange={(e) => { setSenha(e.target.value); setErro(""); }}
                     className="pl-10 pr-10"
+                    autoComplete="current-password"
+                    required
                   />
                   <button
                     type="button"
@@ -78,8 +98,22 @@ export default function LoginAdmin() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full mt-5 bg-primary hover:bg-primary-dark text-primary-foreground font-semibold h-12 text-base">
-              Entrar <LogIn className="w-4 h-4 ml-2" />
+            {mostrarMsgEsqueci && (
+              <p className="text-xs text-muted-foreground mt-3 bg-muted/50 rounded-lg px-3 py-2">
+                Para redefinir sua senha, entre em contato com o administrador do sistema.
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              disabled={carregando}
+              className="w-full mt-5 bg-primary hover:bg-primary-dark text-primary-foreground font-semibold h-12 text-base"
+            >
+              {carregando ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Entrando...</>
+              ) : (
+                <>Entrar <LogIn className="w-4 h-4 ml-2" /></>
+              )}
             </Button>
 
             <div className="mt-5 pt-4 border-t border-border text-center">
@@ -93,7 +127,6 @@ export default function LoginAdmin() {
         </form>
       </div>
 
-      {/* Footer badge */}
       <div className="absolute bottom-6 right-6 z-10">
         <span className="flex items-center gap-1.5 bg-secondary/80 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
           <span className="w-2 h-2 rounded-full bg-tertiary" />
