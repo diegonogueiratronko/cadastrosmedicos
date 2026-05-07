@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ export default function Aprovacoes() {
   const [rejeitando, setRejeitando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [processando, setProcessando] = useState<string | null>(null);
-  const processadosRef = useRef<Set<string>>(new Set());
 
   const carregar = async () => {
     setLoading(true);
@@ -68,7 +67,6 @@ export default function Aprovacoes() {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao aprovar cadastro", { duration: 4000 });
         return;
       }
-      processadosRef.current.add(idUnico);
       setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
       toast.success("Cadastro aprovado com sucesso!", { duration: 4000 });
       recarregarComRetry(idUnico, "OK");
@@ -92,7 +90,6 @@ export default function Aprovacoes() {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao rejeitar cadastro", { duration: 4000 });
         return;
       }
-      processadosRef.current.add(idUnico);
       setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
       toast.success("Cadastro rejeitado com sucesso!", { duration: 4000 });
       setRejeitando(null);
