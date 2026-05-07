@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros, executarAcao } from "@/services/dashboardService";
