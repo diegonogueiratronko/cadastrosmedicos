@@ -14,19 +14,6 @@ const statusColors: Record<StatusCadastro, string> = {
   INATIVO: "bg-muted text-muted-foreground",
 };
 
-const escolherCadastroMaisAtual = (atual: CadastroRegistro, proximo: CadastroRegistro) => {
-  const atualPendente = atual.status === "PENDENTE";
-  const proximoPendente = proximo.status === "PENDENTE";
-
-  if (atualPendente && !proximoPendente) return proximo;
-  if (!atualPendente && proximoPendente) return atual;
-
-  const dataAtual = atual.dataCadastro ? new Date(atual.dataCadastro).getTime() : 0;
-  const dataProxima = proximo.dataCadastro ? new Date(proximo.dataCadastro).getTime() : 0;
-
-  return dataProxima > dataAtual ? proximo : atual;
-};
-
 export default function Cadastros() {
   const [cadastros, setCadastros] = useState<CadastroRegistro[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,15 +40,7 @@ export default function Cadastros() {
     carregar();
   }, []);
 
-  const cadastrosUnificados = Array.from(
-    cadastros.reduce((mapa, cadastro) => {
-      const existente = mapa.get(cadastro.idUnico);
-      mapa.set(cadastro.idUnico, existente ? escolherCadastroMaisAtual(existente, cadastro) : cadastro);
-      return mapa;
-    }, new Map<string, CadastroRegistro>()).values()
-  );
-
-  const filtered = cadastrosUnificados.filter((c) => {
+  const filtered = cadastros.filter((c) => {
     const matchSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
       c.crm.includes(search) || c.cpf.includes(search);
     const matchStatus = statusFilter === "TODOS" || c.status === statusFilter;
