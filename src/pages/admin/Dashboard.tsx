@@ -23,6 +23,35 @@ const statusColors: Record<StatusCadastro, string> = {
 
 const kpiBarColors = ["bg-primary", "bg-tertiary", "bg-primary", "bg-destructive"];
 
+const escolherCadastroMaisAtual = (atual: CadastroRegistro, proximo: CadastroRegistro) => {
+  const atualPendente = atual.status === "PENDENTE";
+  const proximoPendente = proximo.status === "PENDENTE";
+
+  if (atualPendente && !proximoPendente) return proximo;
+  if (!atualPendente && proximoPendente) return atual;
+
+  const dataAtual = atual.dataCadastro ? new Date(atual.dataCadastro).getTime() : 0;
+  const dataProxima = proximo.dataCadastro ? new Date(proximo.dataCadastro).getTime() : 0;
+
+  return dataProxima > dataAtual ? proximo : atual;
+};
+
+const unificarCadastros = (lista: CadastroRegistro[]) => Array.from(
+  lista.reduce((mapa, cadastro) => {
+    const existente = mapa.get(cadastro.idUnico);
+    mapa.set(cadastro.idUnico, existente ? escolherCadastroMaisAtual(existente, cadastro) : cadastro);
+    return mapa;
+  }, new Map<string, CadastroRegistro>()).values()
+);
+
+const calcularKpis = (lista: CadastroRegistro[]) => ({
+  total: lista.length,
+  pendente: lista.filter((c) => c.status === "PENDENTE").length,
+  ok: lista.filter((c) => c.status === "OK").length,
+  inativo: lista.filter((c) => c.status === "INATIVO").length,
+  erro: lista.filter((c) => c.status === "ERRO").length,
+});
+
 export default function Dashboard() {
   const [dados, setDados] = useState<DashboardData>(emptyData);
   const [loading, setLoading] = useState(true);
@@ -43,25 +72,13 @@ export default function Dashboard() {
 
   useEffect(() => { loadData(); }, []);
 
-  const cadastros = dados.cadastros;
-  const kpis = dados.kpis;
+  const cadastros = unificarCadastros(dados.cadastros);
+  const kpis = cadastros.length > 0 ? calcularKpis(cadastros) : dados.kpis;
 
   const specialtyChartData = dados.top_especialidades.map((item) => ({ name: item.nome, value: item.total }));
 
-  // Deduplica por idUnico, priorizando status final (OK/ERRO) sobre PENDENTE
-  const dedupCadastros = (lista: CadastroRegistro[]) => {
-    const mapa = new Map<string, CadastroRegistro>();
-    for (const c of lista) {
-      const existente = mapa.get(c.idUnico);
-      if (!existente || (existente.status === "PENDENTE" && c.status !== "PENDENTE")) {
-        mapa.set(c.idUnico, c);
-      }
-    }
-    return Array.from(mapa.values());
-  };
-
-  const rawRecent = dados.ultimos_cadastros.length > 0 ? dados.ultimos_cadastros.slice(0, 5) : cadastros.slice(0, 5);
-  const recentCadastros = dedupCadastros(rawRecent);
+  const rawRecent = dados.ultimos_cadastros.length > 0 ? dados.ultimos_cadastros : cadastros;
+  const recentCadastros = unificarCadastros(rawRecent).slice(0, 5);
 
   const formatarData = (data: string) => {
     try {
