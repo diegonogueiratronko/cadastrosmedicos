@@ -1,48 +1,32 @@
-# Por que o novo usuário não consegue entrar no admin
+# Corrigir acesso da Giovanna ao painel admin
 
-## Causa provável
+## Diagnóstico
+O usuário `giovanna.feijao.ext@unimedcnu.coop.br` foi criado no Supabase Auth, mas **não tem linha correspondente em `udc.user_profiles`**. Sem perfil ativo, o `RequireAdmin` redireciona de volta para a tela de login.
 
-O login do admin tem **duas etapas obrigatórias**:
+## Ação
+Rodar uma migration que insere o perfil pegando o `id` direto de `auth.users` pelo email:
 
-1. **Autenticar no Supabase Auth** (`auth.users`) — email/senha.
-2. **Carregar o perfil** do usuário na tabela `udc.user_profiles`, onde precisa existir uma linha com:
-   - `id` = mesmo `id` do `auth.users`
-   - `ativo = true`
-   - `role` ∈ (`admin` | `analista`)
+```sql
+INSERT INTO udc.user_profiles (id, nome_completo, cargo, role, ativo)
+SELECT id, 'Giovanna Feijão', 'Administradora', 'admin', true
+FROM auth.users
+WHERE email = 'giovanna.feijao.ext@unimedcnu.coop.br'
+ON CONFLICT (id) DO UPDATE
+  SET ativo = true, role = 'admin';
+```
 
-O `RequireAdmin` (em `src/components/auth/RouteGuards.tsx`) só libera o `/admin/*` se **ambos** `session` **e** `profile` existirem. Se o perfil não for carregado, o usuário é redirecionado de volta para `/login-admin` — exatamente o comportamento que você descreve ("não abre a página de administrador").
+Também garantir que o email esteja confirmado (caso a confirmação por email esteja ativa no projeto), para evitar bloqueio no `signInWithPassword`:
 
-Quando você cria um usuário só pelo painel de Auth do Supabase, **a linha em `udc.user_profiles` não é criada automaticamente** (não há trigger configurado). Resultado: login passa, mas o app não abre o dashboard.
+```sql
+UPDATE auth.users
+SET email_confirmed_at = COALESCE(email_confirmed_at, now())
+WHERE email = 'giovanna.feijao.ext@unimedcnu.coop.br';
+```
 
-Outras causas possíveis (menos prováveis, mas a verificação cobre tudo):
-- Linha existe mas `ativo = false` → o `AuthContext` faz `signOut()` automático (linhas 72-76 de `AuthContext.tsx`).
-- O `id` da linha em `udc.user_profiles` não bate com o `id` em `auth.users`.
-- Email não confirmado no Supabase Auth (a confirmação por email pode estar habilitada, bloqueando o login antes mesmo do perfil).
+## Escopo
+- **NÃO** mexer em código frontend.
+- **NÃO** alterar fluxos de aprovação, dashboard, layout ou webhooks.
+- Apenas a migration acima.
 
-## O que será feito (na fase de implementação)
-
-1. **Verificar no banco** (via migration de leitura/diagnóstico):
-   - Listar `auth.users` recentes.
-   - Listar `udc.user_profiles` e cruzar com `auth.users` para identificar usuários "órfãos" (sem perfil) e perfis com `ativo = false`.
-
-2. **Corrigir o usuário recém-criado**:
-   - Inserir a linha correspondente em `udc.user_profiles` com `id` igual ao do `auth.users`, `nome_completo`, `role` desejada (`admin` ou `analista`) e `ativo = true`.
-   - Se o email não estiver confirmado, confirmar via SQL (`update auth.users set email_confirmed_at = now() where id = ...`).
-
-3. **Prevenir o problema no futuro** (opcional, recomendado):
-   - Criar um **trigger** `on auth.users insert` que insere automaticamente uma linha "stub" em `udc.user_profiles` (com `ativo = false` por padrão, exigindo aprovação manual de role pelo admin), **ou**
-   - Construir uma tela simples em `/admin/configuracoes` para criar/ativar usuários administradores (cria no Auth + insere o perfil em uma única ação).
-
-## Detalhes técnicos
-
-- Arquivos relevantes (somente leitura nesta fase):
-  - `src/contexts/AuthContext.tsx` (linhas 58-79: `loadProfile` exige perfil ativo)
-  - `src/components/auth/RouteGuards.tsx` (linhas 17-33: `RequireAdmin` exige `session && profile`)
-- Schema: `udc.user_profiles(id uuid PK → auth.users.id, nome_completo, cargo, role, ativo)`.
-
-## Antes de implementar — preciso saber
-
-1. **Qual o email do usuário** que você cadastrou e está com problema?
-2. **Como você o cadastrou?** (a) Painel do Supabase Auth, (b) algum formulário do app, (c) SQL direto.
-3. **Qual role** ele deve ter: `admin` ou `analista`?
-4. Você quer apenas **corrigir esse usuário agora**, ou também quer que eu **adicione a tela/trigger** para evitar recorrência?
+## Validação
+Após a migration, peço para a Giovanna tentar logar novamente em `/login-admin` com a senha definida no painel do Supabase. Se ainda falhar, o motivo provável é senha incorreta — basta resetar pelo painel do Supabase.
