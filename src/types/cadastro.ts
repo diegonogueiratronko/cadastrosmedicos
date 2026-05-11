@@ -144,6 +144,7 @@ export const ESPECIALIDADES = [
   "Musicoterapia",
   "Neurocirurgia",
   "Neurologia",
+  "Oncologia Clínica",
   "Orientação Parental",
   "Ortopedia",
   "Pediatria",
