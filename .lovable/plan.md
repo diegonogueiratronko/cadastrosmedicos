@@ -1,58 +1,48 @@
-## Problema
+# Por que o novo usuário não consegue entrar no admin
 
-Em `src/pages/admin/Aprovacoes.tsx`, ao aprovar/rejeitar:
+## Causa provável
 
-1. O card é removido do estado local imediatamente (otimista) ✅
-2. Em paralelo, `recarregarComRetry` faz um GET no webhook do dashboard
-3. **Bug:** o primeiro retry roda com `delay = 0ms` — a planilha do Google Sheets ainda não propagou a alteração, então o webhook devolve o cadastro **ainda como PENDENTE**
-4. O código então executa `setCadastros(resultado.cadastros.filter(c => c.status === "PENDENTE"))`, **trazendo o card removido de volta para a tela**
+O login do admin tem **duas etapas obrigatórias**:
 
-Resultado: parece que o "refresh não funciona" — na verdade o refresh está acontecendo, mas com dados desatualizados que reintroduzem o card.
+1. **Autenticar no Supabase Auth** (`auth.users`) — email/senha.
+2. **Carregar o perfil** do usuário na tabela `udc.user_profiles`, onde precisa existir uma linha com:
+   - `id` = mesmo `id` do `auth.users`
+   - `ativo = true`
+   - `role` ∈ (`admin` | `analista`)
 
-Existe também uma proteção fraca: o retry só sai do loop se `item.status !== "PENDENTE"`. Se a planilha demora >4s (soma dos delays atuais), o retry termina sem confirmar, mas a função final faz a remoção local — o que já estava correto. O verdadeiro vilão é o **primeiro tick com delay=0** sobrescrevendo o estado otimista.
+O `RequireAdmin` (em `src/components/auth/RouteGuards.tsx`) só libera o `/admin/*` se **ambos** `session` **e** `profile` existirem. Se o perfil não for carregado, o usuário é redirecionado de volta para `/login-admin` — exatamente o comportamento que você descreve ("não abre a página de administrador").
 
-## Correção (escopo mínimo, somente este arquivo)
+Quando você cria um usuário só pelo painel de Auth do Supabase, **a linha em `udc.user_profiles` não é criada automaticamente** (não há trigger configurado). Resultado: login passa, mas o app não abre o dashboard.
 
-Editar **apenas** `src/pages/admin/Aprovacoes.tsx`. Nenhum outro arquivo é tocado.
+Outras causas possíveis (menos prováveis, mas a verificação cobre tudo):
+- Linha existe mas `ativo = false` → o `AuthContext` faz `signOut()` automático (linhas 72-76 de `AuthContext.tsx`).
+- O `id` da linha em `udc.user_profiles` não bate com o `id` em `auth.users`.
+- Email não confirmado no Supabase Auth (a confirmação por email pode estar habilitada, bloqueando o login antes mesmo do perfil).
 
-### Mudanças em `recarregarComRetry`
+## O que será feito (na fase de implementação)
 
-1. **Remover o tick com delay=0**. Novos delays: `[1500, 2500, 4000, 5000]` (total ~13s).
-2. **Manter a lista de IDs já processados localmente** para que, mesmo que o webhook ainda devolva o item como PENDENTE em algum dos retries, ele seja filtrado fora do estado.
-3. **Usar de fato o `statusEsperado`**: só considerar "confirmado" quando `item.status === statusEsperado` OU o item desaparecer.
-4. Em qualquer atualização intermediária do estado, **sempre** filtrar pelos IDs já processados otimisticamente, evitando reaparições.
+1. **Verificar no banco** (via migration de leitura/diagnóstico):
+   - Listar `auth.users` recentes.
+   - Listar `udc.user_profiles` e cruzar com `auth.users` para identificar usuários "órfãos" (sem perfil) e perfis com `ativo = false`.
 
-### Estratégia de estado
+2. **Corrigir o usuário recém-criado**:
+   - Inserir a linha correspondente em `udc.user_profiles` com `id` igual ao do `auth.users`, `nome_completo`, `role` desejada (`admin` ou `analista`) e `ativo = true`.
+   - Se o email não estiver confirmado, confirmar via SQL (`update auth.users set email_confirmed_at = now() where id = ...`).
 
-Adicionar um `useRef<Set<string>>` (`processadosRef`) que guarda os IDs já aprovados/rejeitados na sessão. A `setCadastros` proveniente do retry passa a ser:
+3. **Prevenir o problema no futuro** (opcional, recomendado):
+   - Criar um **trigger** `on auth.users insert` que insere automaticamente uma linha "stub" em `udc.user_profiles` (com `ativo = false` por padrão, exigindo aprovação manual de role pelo admin), **ou**
+   - Construir uma tela simples em `/admin/configuracoes` para criar/ativar usuários administradores (cria no Auth + insere o perfil em uma única ação).
 
-```ts
-setCadastros(
-  resultado.cadastros.filter(
-    (c) => c.status === "PENDENTE" && !processadosRef.current.has(c.idUnico)
-  )
-);
-```
+## Detalhes técnicos
 
-Assim, mesmo se o webhook devolver dados velhos, o card nunca retorna à tela. Quando o backend finalmente reflete o novo status, o filtro por status já basta — e o ID pode permanecer no Set sem dano (ele será removido naturalmente do payload em fetches futuros).
+- Arquivos relevantes (somente leitura nesta fase):
+  - `src/contexts/AuthContext.tsx` (linhas 58-79: `loadProfile` exige perfil ativo)
+  - `src/components/auth/RouteGuards.tsx` (linhas 17-33: `RequireAdmin` exige `session && profile`)
+- Schema: `udc.user_profiles(id uuid PK → auth.users.id, nome_completo, cargo, role, ativo)`.
 
-### Fluxo final esperado
+## Antes de implementar — preciso saber
 
-1. Admin clica em Aprovar
-2. POST para webhook → retorna sucesso
-3. ID é adicionado ao `processadosRef`
-4. Card é removido localmente (otimista) — **e nunca mais reaparece**
-5. Toast de sucesso
-6. Em background, retries confirmam com o backend (sem efeito visual indesejado)
-7. Botão sai do estado "Aprovando..." imediatamente após a resposta da API
-
-### O que NÃO será alterado
-
-- `src/services/dashboardService.ts` (já está correto: `cache: no-store`, busting de URL com timestamp)
-- `src/config/api.ts`
-- Qualquer outro arquivo do admin, do formulário público, layout, rotas, autenticação, design system
-- A lógica do botão "Rejeitar" e do textarea de motivo (somente o fluxo de remoção será corrigido, o resto permanece igual)
-
-## Arquivos editados
-
-- `src/pages/admin/Aprovacoes.tsx` (único arquivo)
+1. **Qual o email do usuário** que você cadastrou e está com problema?
+2. **Como você o cadastrou?** (a) Painel do Supabase Auth, (b) algum formulário do app, (c) SQL direto.
+3. **Qual role** ele deve ter: `admin` ou `analista`?
+4. Você quer apenas **corrigir esse usuário agora**, ou também quer que eu **adicione a tela/trigger** para evitar recorrência?
