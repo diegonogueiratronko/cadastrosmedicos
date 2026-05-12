@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, RefreshCw } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { buscarCadastros, executarAcao } from "@/services/dashboardService";
 import { CadastroRegistro } from "@/types/cadastro";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-
-function filtrarPendentes(cadastros: CadastroRegistro[]) {
-  return cadastros.filter((cadastro) => cadastro.status === "PENDENTE");
-}
 
 export default function Aprovacoes() {
   const { profile, user } = useAuth();
@@ -26,7 +22,8 @@ export default function Aprovacoes() {
 
     const resultado = await buscarCadastros();
     if (resultado && resultado.kpis) {
-      setCadastros(filtrarPendentes(resultado.cadastros));
+      // API agora já retorna apenas pendentes — renderizar tudo.
+      setCadastros(resultado.cadastros);
     } else {
       setCadastros([]);
       setError("Não foi possível conectar ao servidor. Tente novamente.");
@@ -39,37 +36,40 @@ export default function Aprovacoes() {
     carregar();
   }, []);
 
-  const recarregarComRetry = async (idUnico: string, statusEsperado: "OK" | "ERRO") => {
-    // Espera o backend (Google Sheets) propagar antes do primeiro fetch.
-    // Sem delay=0: aquele primeiro tick devolvia o item ainda como PENDENTE
-    // e sobrescrevia a remoção otimista, fazendo o card "voltar" para a tela.
+  const recarregarComRetry = async (numeroCadastro: number | undefined, idUnico: string) => {
     const delays = [1500, 2500, 4000, 5000];
     for (const delay of delays) {
       await new Promise((r) => setTimeout(r, delay));
       const resultado = await buscarCadastros();
       if (!resultado) continue;
-      const item = resultado.cadastros.find((c) => c.idUnico === idUnico);
-      // Confirmado quando o item sumiu OU já reflete o status esperado
-      if (!item || item.status === statusEsperado || item.status !== "PENDENTE") {
-        setCadastros(filtrarPendentes(resultado.cadastros));
+      const aindaPresente = resultado.cadastros.some((c) =>
+        numeroCadastro != null ? c.numeroCadastro === numeroCadastro : c.idUnico === idUnico,
+      );
+      if (!aindaPresente) {
+        setCadastros(resultado.cadastros);
         return;
       }
     }
-    setCadastros((prev) => filtrarPendentes(prev));
   };
 
-  const aprovar = async (idUnico: string) => {
+  const aprovar = async (c: CadastroRegistro) => {
     if (processando) return;
-    setProcessando(idUnico);
+    setProcessando(c.idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "OK", "", profile?.nome_completo || user?.email || "admin");
+      const resultado = await executarAcao(
+        c.idUnico,
+        "OK",
+        "",
+        profile?.nome_completo || user?.email || "admin",
+        c.numeroCadastro,
+      );
       if (resultado && resultado.sucesso === false) {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao aprovar cadastro", { duration: 4000 });
         return;
       }
-      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
+      setCadastros((prev) => prev.filter((x) => x.numeroCadastro !== c.numeroCadastro || x.idUnico !== c.idUnico));
       toast.success("Cadastro aprovado com sucesso!", { duration: 4000 });
-      recarregarComRetry(idUnico, "OK");
+      recarregarComRetry(c.numeroCadastro, c.idUnico);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro de conexão. Tente novamente.", { duration: 4000 });
     } finally {
@@ -77,24 +77,30 @@ export default function Aprovacoes() {
     }
   };
 
-  const rejeitar = async (idUnico: string) => {
+  const rejeitar = async (c: CadastroRegistro) => {
     if (!motivo.trim()) {
       toast.error("Informe o motivo da rejeição.");
       return;
     }
     if (processando) return;
-    setProcessando(idUnico);
+    setProcessando(c.idUnico);
     try {
-      const resultado = await executarAcao(idUnico, "ERRO", motivo, profile?.nome_completo || user?.email || "admin");
+      const resultado = await executarAcao(
+        c.idUnico,
+        "ERRO",
+        motivo,
+        profile?.nome_completo || user?.email || "admin",
+        c.numeroCadastro,
+      );
       if (resultado && resultado.sucesso === false) {
         toast.error(resultado.mensagem || resultado.erro || "Erro ao rejeitar cadastro", { duration: 4000 });
         return;
       }
-      setCadastros((prev) => prev.filter((c) => c.idUnico !== idUnico));
+      setCadastros((prev) => prev.filter((x) => x.numeroCadastro !== c.numeroCadastro || x.idUnico !== c.idUnico));
       toast.success("Cadastro rejeitado com sucesso!", { duration: 4000 });
       setRejeitando(null);
       setMotivo("");
-      recarregarComRetry(idUnico, "ERRO");
+      recarregarComRetry(c.numeroCadastro, c.idUnico);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro de conexão. Tente novamente.", { duration: 4000 });
     } finally {
@@ -125,39 +131,51 @@ export default function Aprovacoes() {
           </div>
         )}
 
-        {cadastros.map((c) => (
-          <div key={c.idUnico} className="bg-card rounded-xl p-5 shadow-sm border border-border">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-heading font-semibold text-foreground">{c.nome}</h3>
-                <p className="text-sm text-muted-foreground">CRM {c.crm}/{c.ufCrm} · {c.especialidade} · {c.dataCadastro}</p>
+        {cadastros.map((c) => {
+          const key = `${c.numeroCadastro ?? "x"}-${c.idUnico}`;
+          const tentativa = (c.tentativasAnteriores ?? 0) + 1;
+          return (
+            <div key={key} className="bg-card rounded-xl p-5 shadow-sm border border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-heading font-semibold text-foreground">{c.nome}</h3>
+                    {c.ehReenvio && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 text-warning px-2 py-0.5 text-xs font-medium">
+                        <RefreshCw className="w-3 h-3" />
+                        Reenvio ({tentativa}ª tentativa)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">CRM {c.crm}/{c.ufCrm} · {c.especialidade} · {c.dataCadastro}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" disabled={!!processando} onClick={() => aprovar(c)} className="bg-primary hover:bg-primary-dark text-primary-foreground">
+                    {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />} Aprovar
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={!!processando} onClick={() => setRejeitando(rejeitando === key ? null : key)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                    <XCircle className="w-4 h-4 mr-1" /> Rejeitar
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" disabled={!!processando} onClick={() => aprovar(c.idUnico)} className="bg-primary hover:bg-primary-dark text-primary-foreground">
-                  {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />} Aprovar
-                </Button>
-                <Button size="sm" variant="outline" disabled={!!processando} onClick={() => setRejeitando(rejeitando === c.idUnico ? null : c.idUnico)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                  <XCircle className="w-4 h-4 mr-1" /> Rejeitar
-                </Button>
-              </div>
-            </div>
 
-            {rejeitando === c.idUnico && (
-              <div className="mt-4 space-y-2">
-                <textarea
-                  value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
-                  placeholder="Motivo da rejeição..."
-                  disabled={!!processando}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
-                />
-                <Button size="sm" variant="destructive" disabled={!!processando} onClick={() => rejeitar(c.idUnico)}>
-                  {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null} Confirmar Rejeição
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
+              {rejeitando === key && (
+                <div className="mt-4 space-y-2">
+                  <textarea
+                    value={motivo}
+                    onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Motivo da rejeição..."
+                    disabled={!!processando}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+                  />
+                  <Button size="sm" variant="destructive" disabled={!!processando} onClick={() => rejeitar(c)}>
+                    {processando === c.idUnico ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null} Confirmar Rejeição
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </AdminLayout>
   );
