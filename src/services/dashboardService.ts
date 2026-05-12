@@ -40,6 +40,9 @@ interface CadastroN8n {
   MOTIVO_INATIVACAO?: string;
   OBSERVACOES?: string;
   NOME_FANTASIA?: string;
+  NUMERO_CADASTRO?: number;
+  _eh_reenvio?: boolean;
+  _tentativas_anteriores?: number;
 }
 
 interface DashboardResponseN8n {
@@ -91,6 +94,9 @@ function normalizarCadastro(item: CadastroN8n): CadastroRegistro {
     tipoOperacao: item.TIPO_OPERACAO,
     dataInativacao: item.DATA_INATIVACAO,
     motivoInativacao: item.MOTIVO_INATIVACAO,
+    numeroCadastro: typeof item.NUMERO_CADASTRO === "number" ? item.NUMERO_CADASTRO : undefined,
+    ehReenvio: item._eh_reenvio === true,
+    tentativasAnteriores: typeof item._tentativas_anteriores === "number" ? item._tentativas_anteriores : 0,
   };
 }
 
@@ -142,11 +148,18 @@ export async function buscarCadastros(): Promise<DashboardData | null> {
   }
 }
 
-export async function executarAcao(idUnico: string, novoStatus: string, motivo: string, atualizadoPor: string) {
+export async function executarAcao(
+  idUnico: string,
+  novoStatus: string,
+  motivo: string,
+  atualizadoPor: string,
+  numeroCadastro?: number,
+) {
   const response = await fetch(API_CONFIG.WEBHOOK_ACAO, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      numero_cadastro: numeroCadastro,
       id_unico: idUnico,
       novo_status: novoStatus,
       motivo,

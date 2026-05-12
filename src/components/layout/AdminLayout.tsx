@@ -9,7 +9,6 @@ import { NavLink } from "@/components/NavLink";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
-  { label: "Cadastros", icon: ClipboardList, path: "/admin/cadastros" },
   { label: "Pendentes", icon: FolderOpen, path: "/admin/aprovacoes" },
   { label: "Aprovados", icon: CheckCircle, path: "/admin/documentos" },
   { label: "Insights IA", icon: Sparkles, path: "/admin/insights", badge: "IA" },

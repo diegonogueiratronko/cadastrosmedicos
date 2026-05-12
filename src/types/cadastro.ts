@@ -104,6 +104,9 @@ export interface CadastroRegistro {
   tipoOperacao?: string;
   dataInativacao?: string;
   motivoInativacao?: string;
+  numeroCadastro?: number;
+  ehReenvio?: boolean;
+  tentativasAnteriores?: number;
 }
 
 export const UFS_BRASIL = [
