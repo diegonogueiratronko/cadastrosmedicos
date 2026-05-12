@@ -1,32 +1,52 @@
-# Corrigir acesso da Giovanna ao painel admin
+## Bugfix — Usar NUMERO_CADASTRO ao aprovar/rejeitar
 
-## Diagnóstico
-O usuário `giovanna.feijao.ext@unimedcnu.coop.br` foi criado no Supabase Auth, mas **não tem linha correspondente em `udc.user_profiles`**. Sem perfil ativo, o `RequireAdmin` redireciona de volta para a tela de login.
+### Problema
+Quando um médico tem múltiplas linhas na planilha com o mesmo `ID_UNICO` (ex: rejeitada + reenvio), o n8n acaba atualizando a linha errada. Backend já foi corrigido para usar `NUMERO_CADASTRO` (sequencial por linha) como chave. Frontend precisa enviar esse campo e exibir flag de reenvio.
 
-## Ação
-Rodar uma migration que insere o perfil pegando o `id` direto de `auth.users` pelo email:
+### Mudanças
 
-```sql
-INSERT INTO udc.user_profiles (id, nome_completo, cargo, role, ativo)
-SELECT id, 'Giovanna Feijão', 'Administradora', 'admin', true
-FROM auth.users
-WHERE email = 'giovanna.feijao.ext@unimedcnu.coop.br'
-ON CONFLICT (id) DO UPDATE
-  SET ativo = true, role = 'admin';
-```
+**1. `src/types/cadastro.ts`** — adicionar campos no tipo `CadastroRegistro`:
+- `numeroCadastro?: number`
+- `ehReenvio?: boolean`
+- `tentativasAnteriores?: number`
 
-Também garantir que o email esteja confirmado (caso a confirmação por email esteja ativa no projeto), para evitar bloqueio no `signInWithPassword`:
+**2. `src/services/dashboardService.ts`**
+- Estender `CadastroN8n` com `NUMERO_CADASTRO`, `_eh_reenvio`, `_tentativas_anteriores`.
+- Mapear esses campos em `normalizarCadastro`.
+- Atualizar assinatura de `executarAcao` para receber `numeroCadastro` e incluí-lo no payload POST:
+  ```json
+  {
+    "numero_cadastro": 9,
+    "id_unico": "...",
+    "novo_status": "OK",
+    "motivo": "",
+    "atualizado_por": "..."
+  }
+  ```
 
-```sql
-UPDATE auth.users
-SET email_confirmed_at = COALESCE(email_confirmed_at, now())
-WHERE email = 'giovanna.feijao.ext@unimedcnu.coop.br';
-```
+**3. `src/pages/admin/Aprovacoes.tsx`**
+- Passar `c.numeroCadastro` nas chamadas `executarAcao` (aprovar/rejeitar).
+- Renderizar badge ao lado do nome quando `c.ehReenvio === true`:
+  > 🔁 Reenvio (Nª tentativa) — onde N = `tentativasAnteriores + 1`
+  
+  Usando o componente `Badge` existente (variant custom amber), seguindo design tokens (não inline styles hardcoded — usar classes Tailwind com cor warning).
+- Remover o `filtrarPendentes` local: a API agora já devolve só pendentes em `cadastros[]`. Renderizar tudo que vier. (A função era um filtro client-side; deixar de filtrar evita esconder linhas de reenvio que tenham status correto.)
+- Ajuste no `recarregarComRetry`: como a API só traz pendentes, considerar item "confirmado" quando ele sumiu da lista. Manter a lógica de delays.
 
-## Escopo
-- **NÃO** mexer em código frontend.
-- **NÃO** alterar fluxos de aprovação, dashboard, layout ou webhooks.
-- Apenas a migration acima.
+**4. Tela `/admin/cadastros`**
+Pergunta: a API agora retorna só pendentes em `cadastros[]`. A tela atual filtra por status (TODOS/OK/ERRO/etc) — vai ficar sempre vazia para os outros status.
 
-## Validação
-Após a migration, peço para a Giovanna tentar logar novamente em `/login-admin` com a senha definida no painel do Supabase. Se ainda falhar, o motivo provável é senha incorreta — basta resetar pelo painel do Supabase.
+→ Ver pergunta abaixo.
+
+### Fora de escopo
+- Formulário público de cadastro
+- Autenticação
+- Redesign de telas
+- Backend / n8n (já feito)
+
+### Pergunta para você
+A tela **/admin/cadastros** (que listava todos os status com filtro) vai ficar quebrada porque a API agora só devolve pendentes. O que prefere?
+
+- **A)** Remover do menu lateral por enquanto (mais simples — Dashboard já mostra KPIs, "Pendentes" mostra pendentes, "Aprovados" mostra aprovados).
+- **B)** Manter como está e aguardar novo endpoint do n8n para listar todos os status.
+- **C)** Manter limitada apenas aos pendentes (vira duplicata da tela "Pendentes" — não recomendo).

@@ -40,6 +40,9 @@ interface CadastroN8n {
   MOTIVO_INATIVACAO?: string;
   OBSERVACOES?: string;
   NOME_FANTASIA?: string;
+  NUMERO_CADASTRO?: number;
+  _eh_reenvio?: boolean;
+  _tentativas_anteriores?: number;
 }
 
 interface DashboardResponseN8n {
@@ -142,11 +145,18 @@ export async function buscarCadastros(): Promise<DashboardData | null> {
   }
 }
 
-export async function executarAcao(idUnico: string, novoStatus: string, motivo: string, atualizadoPor: string) {
+export async function executarAcao(
+  idUnico: string,
+  novoStatus: string,
+  motivo: string,
+  atualizadoPor: string,
+  numeroCadastro?: number,
+) {
   const response = await fetch(API_CONFIG.WEBHOOK_ACAO, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      numero_cadastro: numeroCadastro,
       id_unico: idUnico,
       novo_status: novoStatus,
       motivo,
