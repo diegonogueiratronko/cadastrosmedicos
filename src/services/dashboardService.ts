@@ -94,6 +94,9 @@ function normalizarCadastro(item: CadastroN8n): CadastroRegistro {
     tipoOperacao: item.TIPO_OPERACAO,
     dataInativacao: item.DATA_INATIVACAO,
     motivoInativacao: item.MOTIVO_INATIVACAO,
+    numeroCadastro: typeof item.NUMERO_CADASTRO === "number" ? item.NUMERO_CADASTRO : undefined,
+    ehReenvio: item._eh_reenvio === true,
+    tentativasAnteriores: typeof item._tentativas_anteriores === "number" ? item._tentativas_anteriores : 0,
   };
 }
 
