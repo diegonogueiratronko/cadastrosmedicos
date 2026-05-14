@@ -1,4 +1,5 @@
-import { API_CONFIG } from "@/config/api";
+import { supabase } from "@/lib/supabase";
+import { EDGE_FUNCTIONS } from "@/config/api";
 
 interface DadosCadastro {
   cnpj: string;
@@ -44,7 +45,13 @@ interface DocAdicional {
   arquivo: File;
 }
 
-export async function enviarCadastro(dados: DadosCadastro, arquivos: ArquivosCadastro, docsAdicionais: DocAdicional[] = []) {
+const MEDICO_TOKEN_KEY = "medico_token";
+
+export async function enviarCadastro(
+  dados: DadosCadastro,
+  arquivos: ArquivosCadastro,
+  docsAdicionais: DocAdicional[] = [],
+) {
   const formData = new FormData();
 
   formData.append("nome", dados.nomeCompleto.trim().toUpperCase());
@@ -70,7 +77,6 @@ export async function enviarCadastro(dados: DadosCadastro, arquivos: ArquivosCad
   formData.append("email_testemunha", dados.emailTestemunha.trim().toLowerCase());
   formData.append("observacoes", dados.observacoes || "");
 
-  // Required files
   formData.append("arquivo_identidade", arquivos.arquivo_identidade);
   formData.append("arquivo_crm", arquivos.arquivo_crm);
   formData.append("arquivo_contrato", arquivos.arquivo_contrato);
@@ -78,39 +84,41 @@ export async function enviarCadastro(dados: DadosCadastro, arquivos: ArquivosCad
   formData.append("arquivo_rg_testemunha", arquivos.arquivo_rg_testemunha);
   formData.append("arquivo_certificado_formacao", arquivos.arquivo_certificado_formacao);
 
-  // Optional files
-  if (arquivos.arquivo_declaracao_vinculo) {
-    formData.append("arquivo_declaracao_vinculo", arquivos.arquivo_declaracao_vinculo);
-  }
-  if (arquivos.arquivo_certificado_especialidade) {
-    formData.append("arquivo_certificado_especialidade", arquivos.arquivo_certificado_especialidade);
-  }
-  if (arquivos.arquivo_foto_3x4) {
-    formData.append("arquivo_foto_3x4", arquivos.arquivo_foto_3x4);
-  }
-  if (arquivos.arquivo_assinatura_carimbo) {
-    formData.append("arquivo_assinatura_carimbo", arquivos.arquivo_assinatura_carimbo);
-  }
+  if (arquivos.arquivo_declaracao_vinculo) formData.append("arquivo_declaracao_vinculo", arquivos.arquivo_declaracao_vinculo);
+  if (arquivos.arquivo_certificado_especialidade) formData.append("arquivo_certificado_especialidade", arquivos.arquivo_certificado_especialidade);
+  if (arquivos.arquivo_foto_3x4) formData.append("arquivo_foto_3x4", arquivos.arquivo_foto_3x4);
+  if (arquivos.arquivo_assinatura_carimbo) formData.append("arquivo_assinatura_carimbo", arquivos.arquivo_assinatura_carimbo);
 
-  // Additional docs (only complete pairs)
   for (let i = 0; i < docsAdicionais.length; i++) {
     formData.append(`nome_doc_adicional_${i + 1}`, docsAdicionais[i].nome);
     formData.append(`arquivo_doc_adicional_${i + 1}`, docsAdicionais[i].arquivo);
   }
 
-  const response = await fetch(API_CONFIG.WEBHOOK_CADASTRO, {
-    method: "POST",
+  const token = sessionStorage.getItem(MEDICO_TOKEN_KEY) ?? "";
+
+  const { data, error } = await supabase.functions.invoke(EDGE_FUNCTIONS.SUBMIT_CADASTRO, {
     body: formData,
+    headers: { "x-medico-token": token },
   });
 
-  if (!response.ok) {
-    const erro = await response.json().catch(() => ({ mensagem: "Erro de conexão com o servidor" }));
-    throw new Error(erro.mensagem || "Erro ao enviar cadastro");
+  if (error) {
+    // Tenta extrair mensagem do contexto da edge function
+    let mensagem = "Erro ao enviar cadastro";
+    try {
+      const ctx: any = (error as any).context;
+      if (ctx) {
+        const txt = await ctx.text();
+        const j = JSON.parse(txt);
+        mensagem = j.error || j.mensagem || mensagem;
+      }
+    } catch {}
+    throw new Error(mensagem);
   }
 
-  const text = await response.text();
-  if (!text || text.trim() === "") {
-    return { sucesso: true, id_unico: "" };
+  if (!data) return { sucesso: true, id_unico: "" };
+  if (typeof data === "string") {
+    if (!data.trim()) return { sucesso: true, id_unico: "" };
+    try { return JSON.parse(data); } catch { return { sucesso: true, id_unico: "" }; }
   }
-  return JSON.parse(text);
+  return data;
 }

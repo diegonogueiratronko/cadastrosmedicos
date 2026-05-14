@@ -1,4 +1,5 @@
-import { API_CONFIG } from "@/config/api";
+import { supabase } from "@/lib/supabase";
+import { EDGE_FUNCTIONS } from "@/config/api";
 import { CadastroRegistro, StatusCadastro } from "@/types/cadastro";
 
 interface DashboardKpis {
@@ -102,22 +103,17 @@ function normalizarCadastro(item: CadastroN8n): CadastroRegistro {
 
 export async function buscarCadastros(): Promise<DashboardData | null> {
   try {
-    const url = `${API_CONFIG.WEBHOOK_DASHBOARD}?t=${Date.now()}`;
-    const response = await fetch(url, {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-      },
-    });
+    const { data, error } = await supabase.functions.invoke<DashboardResponseN8n>(
+      EDGE_FUNCTIONS.DASHBOARD_MEDICOS,
+      { method: "GET" },
+    );
 
-    if (!response.ok) throw new Error("Falha ao buscar dados");
+    if (error) {
+      console.error("Erro ao buscar cadastros:", error);
+      return null;
+    }
 
-    const text = await response.text();
-    if (!text || text.trim() === "") {
-      console.warn("Webhook retornou resposta vazia — sem cadastros ainda.");
+    if (!data) {
       return {
         kpis: { total: 0, pendente: 0, ok: 0, inativo: 0, erro: 0 },
         cadastros: [],
@@ -126,8 +122,6 @@ export async function buscarCadastros(): Promise<DashboardData | null> {
         ultimos_cadastros: [],
       };
     }
-
-    const data = JSON.parse(text) as DashboardResponseN8n;
 
     return {
       kpis: {
@@ -152,29 +146,35 @@ export async function executarAcao(
   idUnico: string,
   novoStatus: string,
   motivo: string,
-  atualizadoPor: string,
+  _atualizadoPor: string,
   numeroCadastro?: number,
 ) {
-  const response = await fetch(API_CONFIG.WEBHOOK_ACAO, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke(EDGE_FUNCTIONS.ACAO_CADASTRO, {
+    body: {
       numero_cadastro: numeroCadastro,
       id_unico: idUnico,
       novo_status: novoStatus,
       motivo,
-      atualizado_por: atualizadoPor,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const erro = await response.text();
-    let msg = "Erro ao atualizar status";
-    try { msg = JSON.parse(erro).mensagem || msg; } catch {}
-    throw new Error(msg);
+  if (error) {
+    let mensagem = "Erro ao atualizar status";
+    try {
+      const ctx: any = (error as any).context;
+      if (ctx) {
+        const txt = await ctx.text();
+        const j = JSON.parse(txt);
+        mensagem = j.error || j.mensagem || mensagem;
+      }
+    } catch {}
+    throw new Error(mensagem);
   }
 
-  const text = await response.text();
-  if (!text) return { sucesso: true };
-  try { return JSON.parse(text); } catch { return { sucesso: true }; }
+  if (!data) return { sucesso: true };
+  if (typeof data === "string") {
+    if (!data.trim()) return { sucesso: true };
+    try { return JSON.parse(data); } catch { return { sucesso: true }; }
+  }
+  return data;
 }

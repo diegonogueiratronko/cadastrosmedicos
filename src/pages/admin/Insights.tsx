@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buscarCadastros, DashboardData } from "@/services/dashboardService";
 import { CadastroRegistro } from "@/types/cadastro";
+import { maskCnpj } from "@/utils/mask";
 
 /* ── types ── */
 interface Insight {
@@ -382,7 +383,7 @@ export default function Insights() {
                     <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
                       <div>
                         <p className="text-sm font-medium text-foreground">{c.razaoSocial}</p>
-                        <p className="text-xs text-muted-foreground">CNPJ: {c.cnpj}</p>
+                        <p className="text-xs text-muted-foreground font-mono">CNPJ: {maskCnpj(c.cnpj)}</p>
                       </div>
                       <span className="text-sm font-bold text-[#8B5CF6]">{c.total} médicos</span>
                     </div>

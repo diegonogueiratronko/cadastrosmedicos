@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, ArrowRight } from "lucide-react";
+import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,18 @@ import { Input } from "@/components/ui/input";
 export default function AcessoMedico() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
   const { authMedico } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authMedico(senha)) {
+    if (loading) return;
+    setLoading(true);
+    setErro("");
+    const ok = await authMedico(senha);
+    setLoading(false);
+    if (ok) {
       navigate("/cadastro");
     } else {
       setErro("Senha incorreta. Verifique com a Unimed.");
@@ -51,8 +57,8 @@ export default function AcessoMedico() {
               />
             </div>
             {erro && <p className="text-sm text-destructive mb-3">{erro}</p>}
-            <Button type="submit" className="w-full bg-primary hover:bg-primary-dark text-primary-foreground font-semibold h-12 text-base">
-              Entrar <ArrowRight className="w-4 h-4 ml-2" />
+            <Button type="submit" disabled={loading || !senha} className="w-full bg-primary hover:bg-primary-dark text-primary-foreground font-semibold h-12 text-base">
+              {loading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Validando...</>) : (<>Entrar <ArrowRight className="w-4 h-4 ml-2" /></>)}
             </Button>
 
             <div className="mt-5 pt-4 border-t border-border text-center">
