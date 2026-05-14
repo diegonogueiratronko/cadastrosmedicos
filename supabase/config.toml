@@ -1,0 +1,13 @@
+project_id = "duohngnhrioapnmodyeg"
+
+[functions.verify-medico-pin]
+verify_jwt = false
+
+[functions.submit-cadastro]
+verify_jwt = false
+
+[functions.dashboard-medicos]
+verify_jwt = false
+
+[functions.acao-cadastro]
+verify_jwt = false
