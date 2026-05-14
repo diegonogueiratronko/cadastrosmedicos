@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { MEDICO_PINS } from "@/config/api";
+import { EDGE_FUNCTIONS } from "@/config/api";
+
+const MEDICO_TOKEN_KEY = "medico_token";
+const MEDICO_TOKEN_EXP_KEY = "medico_token_exp";
 
 export interface UserProfile {
   id: string;
@@ -12,17 +15,14 @@ export interface UserProfile {
 }
 
 interface AuthContextType {
-  // Supabase admin auth
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  // Legacy medico PIN auth (formulário público)
   isMedicoAuthed: boolean;
-  authMedico: (senha: string) => boolean;
-  // Compat aliases used by existing admin pages
+  authMedico: (senha: string) => Promise<boolean>;
   adminUser: { email: string; nome: string } | null;
   logoutAdmin: () => void;
 }
@@ -35,24 +35,35 @@ export const useAuth = () => {
   return ctx;
 };
 
+function tokenAindaValido(): boolean {
+  const token = sessionStorage.getItem(MEDICO_TOKEN_KEY);
+  const exp = Number(sessionStorage.getItem(MEDICO_TOKEN_EXP_KEY) || 0);
+  if (!token) return false;
+  return Date.now() < exp;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMedicoAuthed, setIsMedicoAuthed] = useState<boolean>(() => tokenAindaValido());
 
-  // Legacy medico PIN
-  const [isMedicoAuthed, setIsMedicoAuthed] = useState(() => {
-    return sessionStorage.getItem("medico_auth") === "true";
-  });
-
-  const authMedico = useCallback((senha: string): boolean => {
-    if (MEDICO_PINS.includes(senha)) {
+  const authMedico = useCallback(async (senha: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke<{ token: string; expires_in: number }>(
+        EDGE_FUNCTIONS.VERIFY_MEDICO_PIN,
+        { body: { pin: senha } },
+      );
+      if (error || !data?.token) return false;
+      const exp = Date.now() + (data.expires_in ?? 1800) * 1000;
+      sessionStorage.setItem(MEDICO_TOKEN_KEY, data.token);
+      sessionStorage.setItem(MEDICO_TOKEN_EXP_KEY, String(exp));
       setIsMedicoAuthed(true);
-      sessionStorage.setItem("medico_auth", "true");
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }, []);
 
   async function loadProfile(userId: string) {
@@ -79,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Set up listener BEFORE getSession
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -122,14 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }
 
-  // Compat aliases for existing admin components
   const adminUser = profile
     ? { email: user?.email || "", nome: profile.nome_completo }
     : null;
 
-  const logoutAdmin = () => {
-    signOut();
-  };
+  const logoutAdmin = () => { signOut(); };
 
   return (
     <AuthContext.Provider
