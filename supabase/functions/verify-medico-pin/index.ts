@@ -1,6 +1,7 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { signMedicoToken } from "../_shared/jwt.ts";
 
+// verify-medico-pin: valida PIN e emite JWT curto
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
