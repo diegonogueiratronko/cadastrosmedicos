@@ -1,4 +1,4 @@
-import { N8N_WEBHOOKS } from "@/config/api";
+import { N8N_WEBHOOKS, N8N_API_KEY } from "@/config/api";
 
 interface DadosCadastro {
   cnpj: string;
@@ -93,6 +93,9 @@ export async function enviarCadastro(
 
   const res = await fetch(N8N_WEBHOOKS.CADASTRO_MEDICO, {
     method: "POST",
+    headers: {
+      "X-API-Key": N8N_API_KEY,
+    },
     body: formData,
   });
 

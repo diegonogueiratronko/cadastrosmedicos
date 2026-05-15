@@ -1,4 +1,4 @@
-import { N8N_WEBHOOKS } from "@/config/api";
+import { N8N_WEBHOOKS, N8N_API_KEY } from "@/config/api";
 import { CadastroRegistro, StatusCadastro } from "@/types/cadastro";
 
 interface DashboardKpis {
@@ -104,7 +104,12 @@ export async function buscarCadastros(): Promise<DashboardData | null> {
   try {
     const res = await fetch(`${N8N_WEBHOOKS.DASHBOARD_MEDICOS}?t=${Date.now()}`, {
       method: "GET",
-      headers: { "Cache-Control": "no-cache" },
+      cache: "no-store",
+      headers: {
+        "X-API-Key": N8N_API_KEY,
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+      },
     });
     if (!res.ok) {
       console.error("Erro HTTP dashboard:", res.status);
@@ -140,7 +145,10 @@ export async function executarAcao(
 ) {
   const res = await fetch(N8N_WEBHOOKS.ACAO_CADASTRO, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "X-API-Key": N8N_API_KEY,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       numero_cadastro: numeroCadastro,
       id_unico: idUnico,
