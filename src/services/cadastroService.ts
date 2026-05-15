@@ -1,5 +1,4 @@
-import { supabase } from "@/lib/supabase";
-import { EDGE_FUNCTIONS } from "@/config/api";
+import { N8N_WEBHOOKS } from "@/config/api";
 
 interface DadosCadastro {
   cnpj: string;
@@ -44,8 +43,6 @@ interface DocAdicional {
   nome: string;
   arquivo: File;
 }
-
-const MEDICO_TOKEN_KEY = "medico_token";
 
 export async function enviarCadastro(
   dados: DadosCadastro,
@@ -94,31 +91,20 @@ export async function enviarCadastro(
     formData.append(`arquivo_doc_adicional_${i + 1}`, docsAdicionais[i].arquivo);
   }
 
-  const token = sessionStorage.getItem(MEDICO_TOKEN_KEY) ?? "";
-
-  const { data, error } = await supabase.functions.invoke(EDGE_FUNCTIONS.SUBMIT_CADASTRO, {
+  const res = await fetch(N8N_WEBHOOKS.CADASTRO_MEDICO, {
+    method: "POST",
     body: formData,
-    headers: { "x-medico-token": token },
   });
 
-  if (error) {
-    // Tenta extrair mensagem do contexto da edge function
+  const text = await res.text();
+  if (!res.ok) {
     let mensagem = "Erro ao enviar cadastro";
     try {
-      const ctx: any = (error as any).context;
-      if (ctx) {
-        const txt = await ctx.text();
-        const j = JSON.parse(txt);
-        mensagem = j.error || j.mensagem || mensagem;
-      }
+      const j = JSON.parse(text);
+      mensagem = j.error || j.mensagem || mensagem;
     } catch {}
     throw new Error(mensagem);
   }
-
-  if (!data) return { sucesso: true, id_unico: "" };
-  if (typeof data === "string") {
-    if (!data.trim()) return { sucesso: true, id_unico: "" };
-    try { return JSON.parse(data); } catch { return { sucesso: true, id_unico: "" }; }
-  }
-  return data;
+  if (!text.trim()) return { sucesso: true, id_unico: "" };
+  try { return JSON.parse(text); } catch { return { sucesso: true, id_unico: "" }; }
 }
