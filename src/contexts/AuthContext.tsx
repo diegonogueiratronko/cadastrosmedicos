@@ -1,10 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { EDGE_FUNCTIONS } from "@/config/api";
+import { MEDICO_SENHAS } from "@/config/api";
 
-const MEDICO_TOKEN_KEY = "medico_token";
-const MEDICO_TOKEN_EXP_KEY = "medico_token_exp";
+const MEDICO_AUTH_KEY = "medico_authed";
 
 export interface UserProfile {
   id: string;
@@ -35,11 +34,8 @@ export const useAuth = () => {
   return ctx;
 };
 
-function tokenAindaValido(): boolean {
-  const token = sessionStorage.getItem(MEDICO_TOKEN_KEY);
-  const exp = Number(sessionStorage.getItem(MEDICO_TOKEN_EXP_KEY) || 0);
-  if (!token) return false;
-  return Date.now() < exp;
+function medicoAuthed(): boolean {
+  return sessionStorage.getItem(MEDICO_AUTH_KEY) === "1";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -47,23 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMedicoAuthed, setIsMedicoAuthed] = useState<boolean>(() => tokenAindaValido());
+  const [isMedicoAuthed, setIsMedicoAuthed] = useState<boolean>(() => medicoAuthed());
 
   const authMedico = useCallback(async (senha: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke<{ token: string; expires_in: number }>(
-        EDGE_FUNCTIONS.VERIFY_MEDICO_PIN,
-        { body: { pin: senha } },
-      );
-      if (error || !data?.token) return false;
-      const exp = Date.now() + (data.expires_in ?? 1800) * 1000;
-      sessionStorage.setItem(MEDICO_TOKEN_KEY, data.token);
-      sessionStorage.setItem(MEDICO_TOKEN_EXP_KEY, String(exp));
-      setIsMedicoAuthed(true);
-      return true;
-    } catch {
-      return false;
-    }
+    if (!(MEDICO_SENHAS as readonly string[]).includes(senha.trim())) return false;
+    sessionStorage.setItem(MEDICO_AUTH_KEY, "1");
+    setIsMedicoAuthed(true);
+    return true;
   }, []);
 
   async function loadProfile(userId: string) {
