@@ -1,5 +1,4 @@
-import { supabase } from "@/lib/supabase";
-import { EDGE_FUNCTIONS } from "@/config/api";
+import { N8N_WEBHOOKS } from "@/config/api";
 import { CadastroRegistro, StatusCadastro } from "@/types/cadastro";
 
 interface DashboardKpis {
@@ -103,25 +102,15 @@ function normalizarCadastro(item: CadastroN8n): CadastroRegistro {
 
 export async function buscarCadastros(): Promise<DashboardData | null> {
   try {
-    const { data, error } = await supabase.functions.invoke<DashboardResponseN8n>(
-      EDGE_FUNCTIONS.DASHBOARD_MEDICOS,
-      { method: "GET" },
-    );
-
-    if (error) {
-      console.error("Erro ao buscar cadastros:", error);
+    const res = await fetch(`${N8N_WEBHOOKS.DASHBOARD_MEDICOS}?t=${Date.now()}`, {
+      method: "GET",
+      headers: { "Cache-Control": "no-cache" },
+    });
+    if (!res.ok) {
+      console.error("Erro HTTP dashboard:", res.status);
       return null;
     }
-
-    if (!data) {
-      return {
-        kpis: { total: 0, pendente: 0, ok: 0, inativo: 0, erro: 0 },
-        cadastros: [],
-        top_especialidades: [],
-        distribuicao_vinculo: [],
-        ultimos_cadastros: [],
-      };
-    }
+    const data: DashboardResponseN8n = await res.json().catch(() => ({}));
 
     return {
       kpis: {
@@ -146,35 +135,30 @@ export async function executarAcao(
   idUnico: string,
   novoStatus: string,
   motivo: string,
-  _atualizadoPor: string,
+  atualizadoPor: string,
   numeroCadastro?: number,
 ) {
-  const { data, error } = await supabase.functions.invoke(EDGE_FUNCTIONS.ACAO_CADASTRO, {
-    body: {
+  const res = await fetch(N8N_WEBHOOKS.ACAO_CADASTRO, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       numero_cadastro: numeroCadastro,
       id_unico: idUnico,
       novo_status: novoStatus,
       motivo,
-    },
+      atualizado_por: atualizadoPor,
+    }),
   });
 
-  if (error) {
+  const text = await res.text();
+  if (!res.ok) {
     let mensagem = "Erro ao atualizar status";
     try {
-      const ctx: any = (error as any).context;
-      if (ctx) {
-        const txt = await ctx.text();
-        const j = JSON.parse(txt);
-        mensagem = j.error || j.mensagem || mensagem;
-      }
+      const j = JSON.parse(text);
+      mensagem = j.error || j.mensagem || mensagem;
     } catch {}
     throw new Error(mensagem);
   }
-
-  if (!data) return { sucesso: true };
-  if (typeof data === "string") {
-    if (!data.trim()) return { sucesso: true };
-    try { return JSON.parse(data); } catch { return { sucesso: true }; }
-  }
-  return data;
+  if (!text.trim()) return { sucesso: true };
+  try { return JSON.parse(text); } catch { return { sucesso: true }; }
 }
