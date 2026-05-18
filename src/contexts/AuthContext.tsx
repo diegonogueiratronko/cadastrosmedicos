@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [isMedicoAuthed, setIsMedicoAuthed] = useState<boolean>(() => medicoAuthed());
 
   const authMedico = useCallback(async (senha: string): Promise<boolean> => {
@@ -59,20 +60,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from("user_profiles")
       .select("id, nome_completo, cargo, role, ativo")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
-      console.error("Erro ao carregar perfil:", error);
+    if (error) {
+      console.error("[Auth] Erro ao carregar perfil:", error);
+      setProfileError(
+        `Falha ao carregar perfil (${error.code || "?"}): ${error.message}. ` +
+        `Verifique se o schema "udc" está exposto na API do Supabase e se há política RLS de SELECT em udc.user_profiles para o próprio usuário.`
+      );
       setProfile(null);
+      await supabase.auth.signOut();
+      return;
+    }
+
+    if (!data) {
+      console.warn("[Auth] Perfil não encontrado para user.id =", userId);
+      setProfileError(
+        `Seu usuário foi autenticado mas não há linha em udc.user_profiles com id = ${userId}. ` +
+        `Confira se o "id" da linha do perfil é exatamente o mesmo do auth.users.`
+      );
+      setProfile(null);
+      await supabase.auth.signOut();
       return;
     }
 
     if (!data.ativo) {
-      await supabase.auth.signOut();
+      setProfileError("Seu acesso está inativo. Procure um administrador.");
       setProfile(null);
+      await supabase.auth.signOut();
       return;
     }
 
+    setProfileError(null);
     setProfile(data as UserProfile);
   }
 
@@ -103,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function signIn(email: string, password: string) {
+    setProfileError(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       const msg =
@@ -132,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
+        profileError,
         signIn,
         signOut,
         isMedicoAuthed,
