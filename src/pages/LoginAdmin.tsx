@@ -12,7 +12,7 @@ export default function LoginAdmin() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mostrarMsgEsqueci, setMostrarMsgEsqueci] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, profileError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || "/admin/dashboard";
