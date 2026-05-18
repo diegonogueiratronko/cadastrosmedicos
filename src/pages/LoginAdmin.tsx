@@ -41,10 +41,10 @@ export default function LoginAdmin() {
             <h3 className="font-heading font-bold text-lg text-card-foreground text-center mb-1">Dashboard Administrativo</h3>
             <p className="text-xs text-muted-foreground text-center mb-6">Acesso restrito · Setor de Cadastros</p>
 
-            {erro && (
-              <div className="flex items-center gap-2 bg-destructive/10 text-destructive rounded-lg px-4 py-3 mb-4 text-sm">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                {erro}
+            {(erro || profileError) && (
+              <div className="flex items-start gap-2 bg-destructive/10 text-destructive rounded-lg px-4 py-3 mb-4 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="break-words">{erro || profileError}</span>
               </div>
             )}
 
