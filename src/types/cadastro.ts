@@ -134,6 +134,7 @@ export const ESPECIALIDADES = [
   "Dermatologia",
   "Endocrinologia",
   "Endoscopia e Colonoscopia",
+  "Enfermagem",
   "Fisioterapeuta",
   "Fisioterapia",
   "Fonoaudiologia",
