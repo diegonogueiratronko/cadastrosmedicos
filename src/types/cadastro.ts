@@ -2,6 +2,7 @@ export interface DadosEmpresa {
   cnpj: string;
   razaoSocial: string;
   nomeFantasia: string;
+  cep: string;
   enderecoCnpj: string;
   inscricaoMunicipal: string;
   inscricaoEstadual: string;

@@ -2,7 +2,7 @@ import { UseFormReturn } from "react-hook-form";
 import { DadosEmpresa, ArquivoUpload } from "@/types/cadastro";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { maskCNPJ } from "@/utils/masks";
+import { maskCNPJ, maskCEP } from "@/utils/masks";
 import { Upload, Check, FileText, Info } from "lucide-react";
 import { validateFile, formatFileSize } from "@/utils/fileUtils";
 import { toast } from "sonner";
@@ -45,6 +45,21 @@ export default function StepDadosEmpresa({ form, declaracaoVinculo, onDeclaracao
         </div>
       </div>
 
+
+      <div>
+        <label className="text-sm font-medium text-foreground">CEP <span className="text-destructive">*</span></label>
+        <Input
+          {...register("cep")}
+          placeholder="XXXXX-XXX"
+          value={watch("cep")}
+          onChange={(e) => setValue("cep", maskCEP(e.target.value), { shouldValidate: true })}
+          maxLength={9}
+        />
+        <p className="text-xs text-destructive/90 mt-1 italic">
+          Atenção: preencha o CEP corretamente. Um CEP incorreto pode causar rejeição do cadastro.
+        </p>
+        {errors.cep && <p className="text-sm text-destructive mt-1">{errors.cep.message}</p>}
+      </div>
 
       <div>
         <label className="text-sm font-medium text-foreground">Endereço do CNPJ <span className="text-destructive">*</span></label>

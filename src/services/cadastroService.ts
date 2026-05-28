@@ -4,6 +4,7 @@ interface DadosCadastro {
   cnpj: string;
   razaoSocial: string;
   nomeFantasia?: string;
+  cep: string;
   enderecoCnpj: string;
   inscricaoMunicipal: string;
   inscricaoEstadual: string;
@@ -62,6 +63,7 @@ export async function enviarCadastro(
   formData.append("especialidade", dados.especialidade.trim());
   formData.append("razao_social", dados.razaoSocial.trim());
   formData.append("data_nascimento", dados.dataNascimento);
+  formData.append("cep", dados.cep.replace(/\D/g, ""));
   formData.append("endereco_cnpj", dados.enderecoCnpj.trim());
   formData.append("inscricao_municipal", dados.inscricaoMunicipal.trim());
   formData.append("inscricao_estadual", dados.inscricaoEstadual.trim());
