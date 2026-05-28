@@ -31,7 +31,7 @@ export default function Cadastro() {
   const empresaForm = useForm<DadosEmpresa>({
     resolver: zodResolver(dadosEmpresaSchema),
     defaultValues: {
-      cnpj: "", razaoSocial: "", nomeFantasia: "", enderecoCnpj: "",
+      cnpj: "", razaoSocial: "", nomeFantasia: "", cep: "", enderecoCnpj: "",
       inscricaoMunicipal: "", inscricaoEstadual: "",
       banco: "", agencia: "", contaCorrente: "",
       vinculoCnpj: "",
@@ -131,6 +131,7 @@ export default function Cadastro() {
         cnpj: empresa.cnpj,
         razaoSocial: empresa.razaoSocial,
         nomeFantasia: empresa.nomeFantasia || "",
+        cep: empresa.cep,
         enderecoCnpj: empresa.enderecoCnpj,
         inscricaoMunicipal: empresa.inscricaoMunicipal,
         inscricaoEstadual: empresa.inscricaoEstadual,

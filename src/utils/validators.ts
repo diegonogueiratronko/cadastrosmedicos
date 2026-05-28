@@ -39,6 +39,7 @@ export const dadosEmpresaSchema = z.object({
     .refine(isValidCNPJ, "CNPJ inválido"),
   razaoSocial: z.string().min(1, "Razão social é obrigatória"),
   nomeFantasia: z.string().optional().default(""),
+  cep: z.string().refine(v => v.replace(/\D/g, "").length === 8, "CEP deve ter 8 dígitos"),
   enderecoCnpj: z.string().min(1, "Endereço do CNPJ é obrigatório"),
   inscricaoMunicipal: z.string().min(1, "Inscrição Municipal é obrigatória"),
   inscricaoEstadual: z.string().min(1, "Inscrição Estadual é obrigatória"),
