@@ -63,8 +63,9 @@ export async function enviarCadastro(
   formData.append("especialidade", dados.especialidade.trim());
   formData.append("razao_social", dados.razaoSocial.trim());
   formData.append("data_nascimento", dados.dataNascimento);
-  formData.append("cep", dados.cep.replace(/\D/g, ""));
-  formData.append("endereco_cnpj", dados.enderecoCnpj.trim());
+  const cepDigits = dados.cep.replace(/\D/g, "");
+  const cepFormatado = cepDigits.length === 8 ? `${cepDigits.slice(0, 5)}-${cepDigits.slice(5)}` : cepDigits;
+  formData.append("endereco_cnpj", `CEP ${cepFormatado} | ${dados.enderecoCnpj.trim()}`);
   formData.append("inscricao_municipal", dados.inscricaoMunicipal.trim());
   formData.append("inscricao_estadual", dados.inscricaoEstadual.trim());
   formData.append("banco", dados.banco.trim());
