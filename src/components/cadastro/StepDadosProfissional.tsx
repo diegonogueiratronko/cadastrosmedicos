@@ -55,7 +55,7 @@ export default function StepDadosProfissional({ form }: Props) {
           <label className="text-sm font-medium text-foreground">UF do CRM <span className="text-destructive">*</span></label>
           <select {...register("ufCrm")} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
             <option value="">Selecione</option>
-            {UFS_BRASIL.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+            {UFS_BRASIL.map((uf) => <option key={uf.sigla} value={uf.sigla}>{uf.sigla} - {uf.nome}</option>)}
           </select>
           {errors.ufCrm && <p className="text-sm text-destructive mt-1">{errors.ufCrm.message}</p>}
         </div>
