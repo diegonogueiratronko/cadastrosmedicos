@@ -142,6 +142,7 @@ export const UFS_BRASIL = [
 
 export const ESPECIALIDADES = [
   "Alergologia",
+  "Anestesiologia",
   "Arritmologia",
   "Avaliação Psicológica",
   "Bucomaxilo",
@@ -178,6 +179,7 @@ export const ESPECIALIDADES = [
   "Orientação Parental",
   "Ortopedia",
   "Pediatria",
+  "Pneumologia",
   "Proctologia",
   "Psicologia",
   "Psicomotricidade",
