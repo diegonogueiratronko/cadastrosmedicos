@@ -23,7 +23,7 @@ const requiredDocs: DocConfig[] = [
   { key: "arquivoIdentidade", label: "RG / CPF ou CNH do Profissional", description: "Documento de identidade com foto (RG, CNH ou RNE) e CPF — frente e verso visíveis", required: true },
   { key: "arquivoCrm", label: "CRM (frente e verso)", required: true },
   { key: "arquivoContrato", label: "Contrato Social da PJ", required: true },
-  { key: "arquivoDadosBancarios", label: "Comprovante de Dados Bancários", required: true },
+  { key: "arquivoDadosBancarios", label: "Comprovante de Dados Bancários", description: "Comprovante bancário contendo: Razão Social, CNPJ, Identificação do banco, Agência e Conta. Exemplos: Comprovante de transferência; Print do aplicativo; Foto do cartão; Cheque.", required: true },
   { key: "arquivoCertificadoFormacao", label: "Certificado de Formação", description: "Diploma ou certificado da formação principal do profissional (Medicina, Psicologia, Enfermagem, etc.) — frente e verso", required: true },
 ];
 
