@@ -61,7 +61,10 @@ export async function enviarCadastro(
   formData.append("email", dados.email.trim().toLowerCase());
   formData.append("telefone", dados.telefone.replace(/\D/g, ""));
   formData.append("especialidade", dados.especialidade.trim());
-  formData.append("razao_social", dados.razaoSocial.trim());
+  const razaoSocialValor = dados.razaoSocial.trim();
+  formData.append("razao_social", razaoSocialValor);
+  formData.append("razaoSocial", razaoSocialValor);
+  formData.append("RAZAO_SOCIAL", razaoSocialValor);
   formData.append("data_nascimento", dados.dataNascimento);
   const cepDigits = dados.cep.replace(/\D/g, "");
   const cepFormatado = cepDigits.length === 8 ? `${cepDigits.slice(0, 5)}-${cepDigits.slice(5)}` : cepDigits;
